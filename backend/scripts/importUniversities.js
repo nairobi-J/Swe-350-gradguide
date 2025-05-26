@@ -1,12 +1,5 @@
-const {Pool} = require('pg');
-require('dotenv').config();
-const fs = require('fs')
-
-
-const pool = new Pool({
-    connectionString : process.env.DATABASE_URL
-})
-
+const fs = require('fs');
+const pool = require('../db');
 
 const universities = JSON.parse(fs.readFileSync('./files/world_universities_and_domains.json'))
 
@@ -51,6 +44,3 @@ async function importData() {
 }
 
 importData()
-
-
-module.exports = pool
