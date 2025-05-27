@@ -10,6 +10,7 @@ const PORT = process.env.POOL || 5000
 app.use(cors())
 
 const authRoutes = require('./routes/authRoutes')
+const universityRoutes = require('./routes/universityRouter')
 
 app.use(express.json());
 // app.post('/users', async (req, res) => {
@@ -42,8 +43,10 @@ app.use(express.json());
 //     }
 // });
 app.use('/auth', authRoutes)
+app.use('/uni', universityRoutes)
 
 app.post('/auth', authRoutes)
+app.get('/uni', universityRoutes)
 
 app.listen(PORT, ()=>{
      console.log(`Server running on http://localhost:${PORT}`);
