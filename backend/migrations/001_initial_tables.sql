@@ -26,6 +26,30 @@ CREATE TABLE IF NOT EXISTS universities (
     is_verified BOOLEAN DEFAULT TRUE
 );
 
+
+create table if not exists program(
+    program_id  serial primary key,
+	university_id INT not null,
+	name varchar(100) not null,
+	degree_type varchar(20) CHECK (degree_type in('bachelor','masters','phd','diploma','certificate')),
+	field_of_study varchar(50),
+	duration varchar(30),
+	tuition_fee DECIMAL(10,2),
+	deadline DATE,
+	foreign key (university_id) references universities(id)
+);
+
+create table IF NOT EXISTS post(
+    post_id serial primary key,
+	program_id INT not null,
+	title varchar(300) not null,
+	content text not null,
+	post_type varchar(50) check (post_type in('deadline','news','event','alert')),
+	created_at timestamp default current_timestamp,
+	is_important BOOlEAN default FALSE,
+	foreign key (program_id) references program(program_id)
+);
+
 -- Add index for faster searches
 CREATE INDEX idx_universities_country ON universities(country);
 CREATE INDEX idx_universities_name ON universities(name);
