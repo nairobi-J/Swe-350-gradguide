@@ -24,7 +24,7 @@ export default function HigherStudiesPage() {
   useEffect(() => {
     const fetchUniversities = async () => {
       try {
-        const response = await fetch('http://localhost:5000/uni/get?limit=10');
+        const response = await fetch('http://localhost:5000/uni/get?limit=20');
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -118,7 +118,7 @@ export default function HigherStudiesPage() {
     <div className="space-y-6">
 
       {/* Search Section */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+      <div className="bg-white text-black rounded-xl p-6 shadow-sm border border-gray-200">
         <h1 className="text-xl font-semibold text-gray-900 mb-4">Find Your Perfect Study Program</h1>
         <div className="flex gap-4">
           <div className="flex-1 relative">
@@ -181,25 +181,26 @@ export default function HigherStudiesPage() {
 
       {/* Recommended Universities - This now displays filteredUniversities */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="p-6 ">
+          <div className="flex items-center justify-between mb-4 ">
             <h2 className="text-lg font-semibold text-gray-900">Top Universities</h2>
             <button className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center">
               View All <ArrowRight className="h-4 w-4 ml-1" />
             </button>
           </div>
 
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y  divide-gray-200 ">
             {/* Display filteredUniversities instead of Universities */}
             {filteredUniversities.length === 0 ? (
               <p className="text-center text-gray-600 text-lg">
                 {searchTerm ? `No results found for "${searchTerm}".` : 'No institutions found. Check your database data or API endpoint.'}
               </p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto ">
                 {filteredUniversities.map((institution) => (
-                  <div key={institution.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-blue-100">
-                    <div className="p-6">
+                  <div key={institution.id} className=" rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-blue-100 bg-gradient-to-r from-blue-200 to-purple-200">
+                    <div className="p-6 ">
+
                       <h2 className="text-2xl font-semibold text-blue-800 mb-2">{institution.name}</h2>
 
                       {institution.country && (
