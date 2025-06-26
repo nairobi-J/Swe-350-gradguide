@@ -77,6 +77,23 @@ const createPost= async(req, res)=>{
         `, [program_id, title, content, post_type, is_important]
     );
 
+    if(is_important){
+        const users = await pool.query(
+            `
+            select user_id from favorites where program_id = $1
+            `,[program_id]
+        )
+
+        for(const row of users.rows){
+            await pool.query(
+                `
+                insert into notification (user_id, post_id)
+                values($1, $2)
+                `,[row.user_id, post_id]
+            )
+        }
+    }
+
     res.status(200).json(result.rows[0])
     } catch (err) {
         res.status(500).json({error: err.message})
