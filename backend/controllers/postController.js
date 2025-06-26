@@ -13,7 +13,7 @@ const getAllPost = async(req, res) =>{
             res.status(404).json({error: 'no program found'})
         }
 
-         res.status(200).json(result.rows[0])
+         res.status(200).json(result.rows)
     }
     catch(error){
         res.status(500).json({error: error.message})
@@ -21,7 +21,7 @@ const getAllPost = async(req, res) =>{
 }
 
 const getPostByID = async(req, res) =>{
-    const {id} = req.params;
+    const {id} = req.query;
     try{
         const result = await pool.query(
             `
@@ -34,7 +34,7 @@ const getPostByID = async(req, res) =>{
             res.status(404).json({error: 'no post found'})
         }
 
-         res.status(200).json(result.rows[0])
+         res.status(200).json(result.rows)
     }
     catch(error){
         res.status(500).json({error: error.message})
@@ -42,7 +42,7 @@ const getPostByID = async(req, res) =>{
 }
 
 const getPostByProgramID = async (req, res) =>{
-    const {id} = req.params
+    const {id} = req.query
 
     try {
         const result = await pool.query(
@@ -56,24 +56,25 @@ const getPostByProgramID = async (req, res) =>{
             res.status(404).json({error: 'no program found for that university'})
         }
 
-        res.status(200).json(result.rows[0])
+        res.status(200).json(result.rows)
     } catch (error) {
         res.status(500).json({error: error.message})
     }
 }
 
-const createPpst= async(req, res)=>{
+const createPost= async(req, res)=>{
+
+     const {program_id, title, content, post_type, is_important} = req.body;
 
     try {
-    const {program_id, title, content, post_type, is_important} = req.body;
+   
 
     const result = await pool.query(
         `
-        insert into program (
-        program_id, title, content, post_type, is_important)
+        insert into post
+        (program_id, title, content, post_type, is_important)
         VALUES($1, $2, $3, $4, $5) returning *
-        `
-        , [program_id, title, content, post_type, is_important]
+        `, [program_id, title, content, post_type, is_important]
     );
 
     res.status(200).json(result.rows[0])
@@ -83,16 +84,16 @@ const createPpst= async(req, res)=>{
 
 }
 
-const updateProgram = async(req, res)=>{
+const updatePost = async(req, res)=>{
 
     try {
-        const {id} = req.params
+        const {id} = req.query
     const {program_id, title, content, post_type, is_important}
     = req.body
 
     const result = await pool.query(
         `
-        UPDATE program SET program_id = $1, title = $2, content = $3, post_type =$4, is_important =$5
+        UPDATE post SET program_id = $1, title = $2, content = $3, post_type =$4, is_important =$5
         WHERE post_id = $6 RETURNING *
         `
         ,[program_id, title, content, post_type, is_important, id]
@@ -102,23 +103,28 @@ const updateProgram = async(req, res)=>{
         res.status(404).json({error: 'program not found'})
     }
 
-    res.status(200).json(res.rows[0])
+    res.status(200).json(result.rows[0])
     } catch (error) {
         res.status(500).json({error: error.message})
     }
 }
 
-const deleteProgramByID = async (req, res) =>{
-    const {id} = req.params
+const deletePostByID = async (req, res) =>{
+    const {id} = req.query
 
     try {
         const result = await pool.query(
             `
-            delete from program where program_id = $1 returning *
+            delete from post where post_id = $1 returning *
             `
             ,[id]
         )
+
+        res.status(200).json(result.rows[0])
     } catch (error) {
-        
+        res.status(500).json({error: error.message})
     }
 }
+
+
+module.exports = {getAllPost, getPostByID, getPostByProgramID, createPost, updatePost, deletePostByID}
