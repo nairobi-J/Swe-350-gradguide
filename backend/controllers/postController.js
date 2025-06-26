@@ -1,10 +1,10 @@
 const pool = require('../db')
 
-const getAllProgram = async(req, res) =>{
+const getAllPost = async(req, res) =>{
     try{
         const result = await pool.query(
             `
-            select * from program
+            select * from post
             `
            
         )
@@ -20,12 +20,12 @@ const getAllProgram = async(req, res) =>{
     }
 }
 
-const getProgramByID = async(req, res) =>{
+const getPostByID = async(req, res) =>{
     const {id} = req.params;
     try{
         const result = await pool.query(
             `
-            select * from program where program_id = $1 
+            select * from post where post_id = $1 
             `
            ,[id]
         )
@@ -41,13 +41,13 @@ const getProgramByID = async(req, res) =>{
     }
 }
 
-const getProgramByUniversityID = async (req, res) =>{
+const getPostByProgramID = async (req, res) =>{
     const {id} = req.params
 
     try {
         const result = await pool.query(
             `
-            select * from program where university_id = $1
+            select * from post where program_id = $1
             `
             ,[id]
         )
@@ -62,18 +62,18 @@ const getProgramByUniversityID = async (req, res) =>{
     }
 }
 
-const createProgram = async(req, res)=>{
+const createPpst= async(req, res)=>{
 
     try {
-    const {university_id, name, degree_type, field_of_study, duration, tuition_fee, deadline} = req.body;
+    const {program_id, title, content, post_type, is_important} = req.body;
 
     const result = await pool.query(
         `
         insert into program (
-        university_id, name, degree_type, field_of_study, duration, tuition_fee, deadline)
-        VALUES($1, $2, $3, $4, $5, $6, $7) returning *
+        program_id, title, content, post_type, is_important)
+        VALUES($1, $2, $3, $4, $5) returning *
         `
-        , [university_id, name, degree_type, field_of_study, duration, tuition_fee, deadline]
+        , [program_id, title, content, post_type, is_important]
     );
 
     res.status(200).json(result.rows[0])
@@ -87,15 +87,15 @@ const updateProgram = async(req, res)=>{
 
     try {
         const {id} = req.params
-    const {university_id, name, degree_type, field_of_study, duration, tuition_fee, deadline}
+    const {program_id, title, content, post_type, is_important}
     = req.body
 
     const result = await pool.query(
         `
-        UPDATE program SET university_id = $1, name = $2, degree_type = $3, field_of_study = $4, 
-        duration = $5, tuition_fee = $6, deadline = $7 WHERE program_id = $8 RETURNING *
+        UPDATE program SET program_id = $1, title = $2, content = $3, post_type =$4, is_important =$5
+        WHERE post_id = $6 RETURNING *
         `
-        ,[university_id, name, degree_type, field_of_study, duration, tuition_fee, deadline, id]
+        ,[program_id, title, content, post_type, is_important, id]
     )
 
     if(result.rows.length === 0){
@@ -122,5 +122,3 @@ const deleteProgramByID = async (req, res) =>{
         
     }
 }
-
-module.exports={createProgram, updateProgram, getAllProgram, getProgramByID, getProgramByUniversityID, deleteProgramByID}
