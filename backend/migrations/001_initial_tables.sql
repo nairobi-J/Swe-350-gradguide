@@ -50,6 +50,29 @@ create table IF NOT EXISTS post(
 	foreign key (program_id) references program(program_id)
 );
 
+create table if not exists notification(
+   notification_id serial primary key,
+   user_id int not null,
+   post_id int not null,
+   is_read boolean default false,
+   notified_at timestamp default current_timestamp,
+   foreign key (user_id) references users(id) on delete cascade,
+   foreign key (post_id) references post(post_id) on delete cascade
+)
+
+
+
+
+create table if not exists favorites(
+     favorite_id serial primary key,
+	 user_id int not null,
+	 program_id int not null,
+	 favorited_at timestamp default current_timestamp,
+	 unique(user_id, program_id),
+	 foreign key (user_id) references users(id) on delete cascade,
+	 foreign key (program_id) references program(program_id) on delete cascade
+)
+
 -- Add index for faster searches
 CREATE INDEX idx_universities_country ON universities(country);
 CREATE INDEX idx_universities_name ON universities(name);
