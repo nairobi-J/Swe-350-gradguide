@@ -2,18 +2,22 @@
 
 import Link from 'next/link';
 import '../globals.css';
-import { GraduationCap, Home, Bot, BookOpen, Briefcase, TrendingUp, Menu, X } from 'lucide-react';
+import { GraduationCap, Home, Bot, BookOpen, Briefcase, TrendingUp, Menu, X, Calendar, User } from 'lucide-react';
 import { useState } from 'react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
+   
     { href: '/dashboard/home', label: 'Home', icon: Home },
     { href: '/dashboard/ai-coach', label: 'AI Coach', icon: Bot },
     { href: '/dashboard/higher-studies', label: 'Study Abroad', icon: BookOpen },
+    { href: '/dashboard/event', label: 'Events', icon: Calendar},
     { href: '/dashboard/job-search', label: 'Search Job', icon: Briefcase },
     { href: '/dashboard/paths', label: 'Career Path', icon: TrendingUp },
+     {href : '/dashboard/user', label:'User', icon:User},
+    
   ];
 
   return (
