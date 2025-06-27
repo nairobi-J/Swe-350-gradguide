@@ -7,6 +7,22 @@
     "alpha_two_code": "AU",
     "state-province": null
   },
+   {
+    "name": "Mohamed bin Zayed University of Artificial Intelligence (MBZUAI)",
+    "domains": ["mbzuai.ac.ae"],
+    "web_pages": ["https://mbzuai.ac.ae/"],
+    "country": "United Arab Emirates",
+    "alpha_two_code": "AE",
+    "state-province": "Abu Dhabi"
+  },
+  {
+    "name": "Bhagwan Parshuram Institute of Technology",
+    "domains": ["bpitindia.edu.in", "bpitindia.in"],
+    "web_pages": ["http://bpitindia.ac.in"],
+    "country": "India",
+    "alpha_two_code": "IN",
+    "state-province": "Delhi"
+  },
   {
     "name": "Universitas Nusa Putra",
     "domains": ["nusaputra.ac.id"],
@@ -71,14 +87,7 @@
     "alpha_two_code": "GB",
     "state-province": null
   },
-  {
-    "name": "Bhagwan Parshuram Institute of Technology",
-    "domains": ["bpitindia.edu.in", "bpitindia.in"],
-    "web_pages": ["http://bpitindia.ac.in"],
-    "country": "India",
-    "alpha_two_code": "IN",
-    "state-province": "Delhi"
-  },
+  
   {
     "name": "National Institute of Applied Sciences of Toulouse",
     "domains": ["insa-toulouse.fr"],
@@ -95,14 +104,7 @@
     "alpha_two_code": "UG",
     "state-province": "Luweero"
   },
-  {
-    "name": "Mohamed bin Zayed University of Artificial Intelligence (MBZUAI)",
-    "domains": ["mbzuai.ac.ae"],
-    "web_pages": ["https://mbzuai.ac.ae/"],
-    "country": "United Arab Emirates",
-    "alpha_two_code": "AE",
-    "state-province": "Abu Dhabi"
-  },
+ 
   {
     "name": "Centro Universitário de Brasília, UNICEUB",
     "domains": ["sempreceub.com", "uniceub.br"],
