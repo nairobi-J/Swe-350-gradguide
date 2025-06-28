@@ -11,6 +11,9 @@ app.use(cors())
 
 const authRoutes = require('./routes/authRoutes')
 const universityRoutes = require('./routes/universityRouter')
+const postRoutes = require('./routes/postRoutes')
+const programRoutes = require('./routes/programRoutes')
+const favoritesRoutes = require('./routes/favoritesRoutes')
 
 app.use(express.json());
 // app.post('/users', async (req, res) => {
@@ -44,6 +47,9 @@ app.use(express.json());
 // });
 app.use('/auth', authRoutes)
 app.use('/uni', universityRoutes)
+app.use('/post', postRoutes)
+app.use('/program', programRoutes)
+app.use('/favorites', favoritesRoutes)
 
 app.post('/auth', authRoutes)
 app.get('/uni', universityRoutes)
