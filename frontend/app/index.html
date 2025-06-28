@@ -3,46 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenRouter API Test</title>
+    <title>Llama 2 Inference Test</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font for better aesthetics -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #f4f7f6; /* Light gray background */
+        }
+    </style>
 </head>
-<body>
-    <h1>Testing OpenRouter API</h1>
-    <p>Check the browser's developer console for the API response.</p>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div id="root" class="w-full max-w-2xl bg-white p-6 rounded-lg shadow-xl border border-gray-200">
+        <!-- React app will be mounted here -->
+    </div>
 
-    <script>
-        fetch("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": "Bearer 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",
-            "HTTP-Referer": "http://localhost", // Or your actual development URL
-            "X-Title": "My Test App",
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            "model": "deepseek/deepseek-chat-v3-0324:free",
-            "messages": [
-              {
-                "role": "user",
-                "content": "What is the meaning of life?"
-              }
-            ]
-          })
-        })
-        .then(response => {
-            if (!response.ok) {
-                // Check for non-2xx HTTP status codes
-                // Important: If the API returns an error, it might still return JSON, so try to parse it.
-                return response.json().then(err => {
-                    throw new Error(`HTTP error! status: ${response.status}, message: ${JSON.stringify(err)}`);
-                }).catch(() => {
-                    // If it's not JSON, just throw a generic error
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                });
+    <!-- React and ReactDOM Libraries (Development versions for easier debugging) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel for JSX transformation in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        // IMPORTANT: For security in production, you should NOT expose API keys in client-side code.
+        // This setup is for demonstration and local testing only.
+        // In a real Next.js application, you would typically use Next.js API Routes (server-side)
+        // to proxy requests to Hugging Face, keeping your API key secret.
+
+        // Placeholder for environment variable
+        // In a deployed environment, `process.env.NEXT_PUBLIC_HF_TOKEN` would be set by your hosting provider.
+        // For local testing in plain HTML, you might need to manually set it like this:
+        const NEXT_PUBLIC_HF_TOKEN = "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"; // Replace with your actual Hugging Face token
+
+        const HF_MODEL_ID = "meta-llama/Llama-2-70b-chat-hf"; // Or any other Llama 2 model ID you have access to
+
+        // Ensure these are available if you are not using a full Next.js environment for this plain HTML file.
+        // In a real Next.js app, process.env would be globally available.
+        // For this standalone HTML, we'll mimic it for clarity.
+        const process = {
+            env: {
+                NEXT_PUBLIC_HF_TOKEN: NEXT_PUBLIC_HF_TOKEN
             }
-            return response.json();
-        })
-        .then(data => console.log('API Response:', data)) // Look for this log
-        .catch(error => console.error('Fetch Error:', error)); // Or this error log
+        };
+
+        const { useState } = React; // Destructure useState from React
+
+        function MyComponent() {
+            const [userInput, setUserInput] = useState('');
+            const [response, setResponse] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState('');
+
+            const generateGuidelines = async () => {
+                setIsLoading(true);
+                setError('');
+                setResponse('');
+
+                // Validate API Token
+                if (!process.env.NEXT_PUBLIC_HF_TOKEN || process.env.NEXT_PUBLIC_HF_TOKEN === "hf_YOUR_HUGGING_FACE_TOKEN_HERE") {
+                    setError("Hugging Face API token is not configured or is a placeholder. Please set NEXT_PUBLIC_HF_TOKEN.");
+                    setIsLoading(false);
+                    return;
+                }
+
+                // Validate User Input
+                if (!userInput.trim()) {
+                    setError("Please enter a prompt before generating guidelines.");
+                    setIsLoading(false);
+                    return;
+                }
+
+                try {
+                    const apiResponse = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL_ID}`, {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${process.env.NEXT_PUBLIC_HF_TOKEN}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            "inputs": userInput, // The user's input text
+                            "parameters": {
+                                "max_new_tokens": 200,
+                                "temperature": 0.7,
+                                "top_k": 50,
+                                "top_p": 0.95,
+                                "do_sample": true,
+                                "return_full_text": false, // Request only the generated text, not the prompt + text
+                            },
+                            // Add options like "use_cache": false if you want to ensure fresh inference
+                        })
+                    });
+
+                    if (!apiResponse.ok) {
+                        const errorText = await apiResponse.text();
+                        let errorMessage = `API Error: ${apiResponse.status}`;
+                        try {
+                            const errorJson = JSON.parse(errorText);
+                            errorMessage += ` - ${errorJson.error || errorJson.message || 'Unknown error'}`;
+                        } catch (parseError) {
+                            errorMessage += ` - ${errorText.substring(0, 150)}... (could not parse error JSON)`;
+                        }
+                        throw new Error(errorMessage);
+                    }
+
+                    const data = await apiResponse.json();
+
+                    if (data && data.length > 0 && data[0].generated_text) {
+                        // Hugging Face text generation usually returns the prompt + generated text
+                        // With "return_full_text": false, it should only return the new text.
+                        // However, some models might still prepend. Trim whitespace for clean output.
+                        setResponse(data[0].generated_text.trim());
+                    } else {
+                        setError('No content found or unexpected response structure from API.');
+                        console.error("Hugging Face API response structure unexpected:", data);
+                    }
+
+                } catch (err) {
+                    setError(`Failed to fetch guidelines: ${err.message}`);
+                    console.error("Fetch error:", err);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            return (
+                <div className="flex flex-col space-y-4">
+                    <h1 className="text-3xl font-bold text-gray-800 text-center mb-4">Llama 2 Guideline Generator</h1>
+                    <p className="text-sm text-gray-600 text-center mb-6">
+                        Enter your prompt to get guidelines generated by a Llama 2 model via Hugging Face Inference API.
+                        Remember to replace `hf_YOUR_HUGGING_FACE_TOKEN_HERE` with your actual token.
+                    </p>
+
+                    <textarea
+                        className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-800 resize-y min-h-[120px]"
+                        value={userInput}
+                        onChange={(e) => setUserInput(e.target.value)}
+                        placeholder="e.g., 'What are the essential steps to become a successful data scientist?'"
+                        rows="5"
+                    ></textarea>
+
+                    <button
+                        onClick={generateGuidelines}
+                        disabled={isLoading}
+                        className={`w-full px-6 py-3 rounded-md text-white font-semibold transition duration-300 ease-in-out
+                            ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md hover:shadow-lg'}
+                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50`}
+                    >
+                        {isLoading ? 'Generating...' : 'Generate Guidelines'}
+                    </button>
+
+                    {error && (
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative" role="alert">
+                            <strong className="font-bold">Error:</strong>
+                            <span className="block sm:inline ml-2">{error}</span>
+                        </div>
+                    )}
+
+                    {response && (
+                        <div className="bg-green-50 border border-green-200 text-gray-800 p-4 rounded-md shadow-sm overflow-auto max-h-96">
+                            <h2 className="text-xl font-semibold mb-2 text-gray-700">Generated Guidelines:</h2>
+                            <p className="whitespace-pre-wrap text-base leading-relaxed">{response}</p>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Render the React component into the root div
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<MyComponent />);
     </script>
 </body>
 </html>
