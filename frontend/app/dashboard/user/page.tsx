@@ -1,11 +1,12 @@
 'use client'
-
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm'; 
 import { useState } from "react";
 
 // Main App component
 const App = () => {
   // State for user's primary interest/goal
-  const [interest, setInterest] = useState('sustainable energy and technology');
+  const [interest, setInterest] = useState('Machine Learning and AI, healthcare technology, and data science');
   const [editingInterest, setEditingInterest] = useState(false); // New state for edit mode
 
   // State for desired output format/detail
@@ -13,16 +14,33 @@ const App = () => {
   const [editingOutputFormat, setEditingOutputFormat] = useState(false); // New state for edit mode
 
   // State for university input
-  const [university, setUniversity] = useState('');
+  const [university, setUniversity] = useState('Shahjalal University of Science and Technology');
   const [editingUniversity, setEditingUniversity] = useState(false); // New state for edit mode
 
   // State for degree/major
-  const [degree, setDegree] = useState('');
+  const [degree, setDegree] = useState('Software Engineering');
   const [editingDegree, setEditingDegree] = useState(false); // New state for edit mode
 
   // State for desired career level
-  const [careerLevel, setCareerLevel] = useState('');
+  const [careerLevel, setCareerLevel] = useState('Student');
   const [editingCareerLevel, setEditingCareerLevel] = useState(false); // New state for edit mode
+
+   const [projects, setProjects] = useState('Home Rental App, Chat Application, Portfolio Website');
+  const [editingProjects, setEditingProjects] = useState(false);
+
+   const [stacks, setStacks] = useState('Mern, java , postgreSQL, MySQL, Firebase');
+  const [editingStacks, setEditingStacks] = useState(false);
+
+   const [priorExperience, setPriorExperience] = useState('worked part-time at a tech startup');
+  const [editingPriorExperience, setEditingPriorExperience] = useState(false);
+
+
+
+   const [cgpa, setCgpga] = useState('3.54');
+  const [editingCgpa, setEditingCgpa] = useState(false);
+    
+   //it should be fetched from his search , his starts interests and all
+   const [shortSummary, setShortSummary] = useState('searching for remote jobs or higher studies');
 
   // State for storing the AI's response
   const [response, setResponse] = useState('');
@@ -42,14 +60,34 @@ const App = () => {
       let basePrompt = `Suggest career guidelines for someone interested in ${interest}.`;
 
       if (university) {
-        basePrompt += ` They are currently studying at ${university}.`;
+        basePrompt += ` currently studying at ${university}.`;
       }
       if (degree) {
-        basePrompt += ` Their major/degree is ${degree}.`;
+        basePrompt += `major/degree is ${degree}.`;
       }
       if (careerLevel) {
-        basePrompt += ` They are looking for ${careerLevel} career advice.`;
+        basePrompt += ` looking for ${careerLevel} `;
       }
+       if (projects) {
+        basePrompt += `doing projects: ${projects}`;
+      }
+       if (stacks) {
+        basePrompt += `Stacks worked with: ${stacks} `;
+      }
+       if (priorExperience) {
+        basePrompt += ` prior experiences ${priorExperience} `;
+      }
+      if (shortSummary) {
+        basePrompt += ` prior experiences ${shortSummary} `;
+      }
+      if (cgpa) {
+        basePrompt += ` cgpa ${shortSummary} career advice.`;
+      }
+       if (shortSummary) {
+        basePrompt += ` cgpa ${shortSummary} career advice.`;
+      }
+
+      
 
       const fullPrompt = `${basePrompt} Please provide ${outputFormat}.`;
       // --- End Dynamic Prompt Construction ---
@@ -151,10 +189,10 @@ const App = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-8 flex items-center justify-center font-inter">
-      <div className="max-w-4xl w-full bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-8 items-center justify-center font-inter">
+      <div className=" w-full bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col ">
         {/* Left Section: Input and Controls */}
-        <div className="p-8 md:w-1/2 flex flex-col justify-between">
+        <div className="p-8 md:w-1/2 flex flex-row justify-between">
           <div>
             <h1 className="text-4xl font-extrabold text-gray-800 mb-6 leading-tight">
               Craft Your <span className="text-indigo-600">Career Path</span>
@@ -164,7 +202,7 @@ const App = () => {
             </p>
 
             {/* Editable Fields Section */}
-            <div className="space-y-4 mb-6">
+            <div className="p-2 mb-6 flex justify-center gap-3">
               {renderEditableField(
                 "Primary Career Interest/Goal",
                 interest,
@@ -184,6 +222,15 @@ const App = () => {
                 "E.g., 'Stanford University'"
               )}
               {renderEditableField(
+                "CGPA",
+                cgpa,
+                setCgpga,
+                editingCgpa,
+                setEditingCgpa,
+                false,
+                "E.g., '3.6'"
+              )}
+              {renderEditableField(
                 "Your Degree/Major",
                 degree,
                 setDegree,
@@ -201,6 +248,33 @@ const App = () => {
                 false,
                 "E.g., 'entry-level', 'mid-career'"
               )}
+               {renderEditableField(
+                "Projects",
+                projects,
+                setProjects,
+                editingProjects,
+                setEditingProjects,
+                false,
+                "E.g., 'Booking app', 'Chat app', 'Portfolio website'"
+              )}
+               {renderEditableField(
+                "Stacks",
+                stacks,
+                setStacks,
+                editingStacks,
+                setEditingStacks,
+                false,
+                "E.g., 'MERN', 'PostGreSQL'"
+              )}
+               {renderEditableField(
+                "Prior Experience",
+                priorExperience,
+                setPriorExperience,
+                editingPriorExperience,
+                setEditingPriorExperience,
+                false,
+                "E.g., 'did remote job', 'worked in a startup', 'interned at a tech company'"
+              )}
               {renderEditableField(
                 "Desired Output Format",
                 outputFormat,
@@ -210,6 +284,8 @@ const App = () => {
                 true, // This is a textarea
                 "E.g., 'a 5-year career plan with specific milestones'"
               )}
+              <p className="text-black">{shortSummary}</p>
+
             </div>
 
             <button
@@ -219,7 +295,7 @@ const App = () => {
             >
               {isLoading ? (
                 <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-5  text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -228,7 +304,7 @@ const App = () => {
               ) : (
                 <>
                   Generate Guidelines
-                  <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <svg className=" h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
                   </svg>
                 </>
@@ -238,7 +314,7 @@ const App = () => {
         </div>
 
         {/* Right Section: Output Display */}
-        <div className="p-8 md:w-1/2 bg-indigo-50 flex items-center justify-center rounded-r-3xl md:rounded-l-none">
+        <div className="p-8  bg-indigo-50 flex items-center justify-center rounded-r-3xl md:rounded-l-none">
           <div className="bg-white p-6 rounded-2xl shadow-inner border border-indigo-100 w-full min-h-[300px] flex flex-col justify-start overflow-auto">
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4">
@@ -249,7 +325,10 @@ const App = () => {
             {response ? (
               <div className="text-gray-800 leading-relaxed prose prose-indigo max-w-none">
                 <h3 className="text-xl font-bold text-indigo-700 mb-3">Your Personalized Guideline:</h3>
-                <p className="whitespace-pre-wrap">{response}</p>
+                {/* Use ReactMarkdown to render the response */}
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {response}
+                </ReactMarkdown>
               </div>
             ) : (
               <div className="text-gray-500 text-center flex flex-col items-center justify-center flex-grow">
