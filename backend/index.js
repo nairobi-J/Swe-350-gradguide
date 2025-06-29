@@ -14,6 +14,7 @@ const universityRoutes = require('./routes/universityRouter')
 const postRoutes = require('./routes/postRoutes')
 const programRoutes = require('./routes/programRoutes')
 const favoritesRoutes = require('./routes/favoritesRoutes')
+const eventRoutes = require('./routes/eventRoutes')
 
 app.use(express.json());
 // app.post('/users', async (req, res) => {
@@ -50,6 +51,7 @@ app.use('/uni', universityRoutes)
 app.use('/post', postRoutes)
 app.use('/program', programRoutes)
 app.use('/favorites', favoritesRoutes)
+app.use('/event', eventRoutes)
 
 app.post('/auth', authRoutes)
 app.get('/uni', universityRoutes)

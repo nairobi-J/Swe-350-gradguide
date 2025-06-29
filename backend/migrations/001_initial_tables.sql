@@ -73,6 +73,32 @@ create table if not exists favorites(
 	 foreign key (program_id) references program(program_id) on delete cascade
 )
 
+create table if not exists event(
+
+     id serial primary key,
+	 user_id int references users(id),
+	 name varchar(500) not null,
+	 type varchar(30) not null check(type in('online', 'offline')),
+	 date date not null,
+	 time time not null,
+	 location text,
+	 description text,
+	 is_paid boolean not null default false,
+	 price numeric(10,2) default 0,
+	 created_at timestamp default now()
+	 
+)
+
+create table if not exists event_registration_form(
+        id serial primary key,
+		event_id int not null references event(id) on delete cascade,
+		name varchar(255) not null,
+		label varchar(255) not null,
+		type varchar(50) not null check (type in('text','email','number','textarea')),
+		required boolean not null default false,
+		created_at timestamp default now()
+)
+
 -- Add index for faster searches
 CREATE INDEX idx_universities_country ON universities(country);
 CREATE INDEX idx_universities_name ON universities(name);
