@@ -5,5 +5,10 @@ const universityProgramsController = require('../controllers/universityProgramsC
 
 router.get('/get', universityProgramsController.getAllUniversityPrograms);
 
+router.get('/count', universityProgramsController.getUniversityCount);
+
+
+router.get('/programs', universityProgramsController.getProgramsCount);
+router.get('/countries', universityProgramsController.getCountries);
 
 module.exports = router;

@@ -8,9 +8,9 @@ const getAllUniversityPrograms = async(req, res) => {
         let query = 'SELECT * FROM university_programs'
         const params = []
         let conditions = []
-
+          
        
-        query += ` ORDER BY "SCHOOL" LIMIT $${params.length + 1} OFFSET $${params.length + 2}`
+        query += ` ORDER BY "University" LIMIT $${params.length + 1} OFFSET $${params.length + 2}`
 
 
 
@@ -32,5 +32,44 @@ const getAllUniversityPrograms = async(req, res) => {
     }
 }
 
+const getUniversityCount = async(req, res)=>{
 
-module.exports = { getAllUniversityPrograms };
+
+    try{
+         const result = await pool.query('SELECT COUNT(DISTINCT "University") AS unique_uni FROM university_programs');
+          res.json({count : parseInt(result.rows[0].unique_uni, 10)});
+
+    } catch(err){
+         console.error('Error fetching unique university count:', err);
+        res.status(500).json({ error: 'Failed to fetch unique university count' });
+    }
+   
+
+        
+    
+}
+
+const getProgramsCount = async(req, res) => {
+       try{
+            const resut = await pool.query('SELECT COUNT(DISTINCT "Program") AS unique_program FROM university_programs');
+            res.json({count: parseInt(resut.rows[0].unique_program, 10)});
+       } catch(err){
+         console.error('Error fetching unique programs count:', err);
+        res.status(500).json({ error: 'Failed to fetch unique programs count' });
+    }
+}
+
+
+const getCountries = async(req, res) => {
+     try{
+            const resut = await pool.query('SELECT COUNT(DISTINCT "Country") AS unique_country FROM university_programs');
+            res.json({count: parseInt(resut.rows[0].unique_country, 10)});
+       } catch(err){
+         console.error('Error fetching unique country count:', err);
+        res.status(500).json({ error: 'Failed to fetch unique country count' });
+    }
+
+}
+
+
+module.exports = { getAllUniversityPrograms, getUniversityCount, getProgramsCount, getCountries };
