@@ -41,4 +41,46 @@ const createEvent = async(req, res) =>{
     }
 }
 
-module.exports = {createEvent}
+const getAllEvent = async(req, res) =>{
+
+    try {
+         const result = await pool.query(
+            `select * from event`
+    )
+
+    res.status(201).json(result.rows)
+    } catch (error) {
+         res.status(501).json({message: error.message})
+    }
+}
+
+const getEventByID = async(req, res) =>{
+    const {id} = req.query
+
+    try {
+         const result = await pool.query(
+            `select * from event where id = $1`,[id]
+    )
+
+    res.status(201).json(result.rows)
+    } catch (error) {
+         res.status(501).json({message: error.message})
+    }
+}
+
+const deleteEventByID = async(req, res) =>{
+    const {id} = req.query
+
+    try {
+         const result = await pool.query(
+            `delete from event where id = $1`,[id]
+    )
+
+    res.status(201).json({message: 'event deletion successful'})
+    } catch (error) {
+         res.status(501).json({message: error.message})
+    }
+}
+
+
+module.exports = {createEvent, getAllEvent, getEventByID, deleteEventByID}
