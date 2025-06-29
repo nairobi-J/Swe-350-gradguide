@@ -1,25 +1,47 @@
 'use client';
-import { BookOpen, GraduationCap, Globe, Search, ArrowRight } from 'lucide-react';
+import { BookOpen, GraduationCap, Globe } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Briefcase, MapPin, Search, DollarSign, Clock, Filter, ArrowRight } from 'lucide-react';
 // Define the interface for a single institution object
-interface Institution {
-  id: number;
-  name: string;
-  domains: string[];
-  web_pages: string[];
-  country: string;
-  alpha_two_code: string;
-  'state-province'?: string | null; // Optional property, can be string or null
-  is_verified?: boolean; // Optional property
-  // Add any other properties your API returns that you might use
-}
+
 export default function HigherStudiesPage() {
- const [universities, setUniversities] = useState<Institution[]>([]);
-  const [filteredUniversities, setFilteredUniversities] = useState<Institution[]>([]);
+ const [universities, setUniversities] = useState([]);
+ const [programs, setPrograms] = useState([]); // Assuming you might want to fetch programs later
+  const [filteredUniversities, setFilteredUniversities] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+
+  //effect to fetch programs initially
+  useEffect(() => {
+    const fetchUniversityPrograms = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/uni/programs/get?limit=20');
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        // Ensure we're setting the actual array to 'Universities' state
+        setPrograms(result.data);
+        //setFilteredUniversities(result.data); // Initialize filtered Universities with all fetched Universities
+
+        console.log("Full API Response Object:", result);
+        console.log("Array being set to 'Universities' state:", result.data);
+
+      } catch (err) {
+        console.error("Failed to fetch Universities:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUniversityPrograms();
+  }, []);
   // Effect to fetch Universities initially
   useEffect(() => {
     const fetchUniversities = async () => {
@@ -87,12 +109,7 @@ export default function HigherStudiesPage() {
 
   // Handler for the search button (optional, as filtering happens on input change)
   const handleSearchButtonClick = () => {
-    // The useEffect above already handles filtering when searchTerm changes,
-    // so this button could just trigger the filter if you prefer it
-    // not to filter on every keystroke, or could be used for advanced search.
-    // For now, it just ensures the filter runs.
-    // If you want immediate filtering, this function might not be strictly needed,
-    // as the useEffect will react to handleSearchChange.
+    
     console.log("Search button clicked for:", searchTerm);
   };
 
@@ -239,16 +256,118 @@ export default function HigherStudiesPage() {
       </div>
 
       {/* Recommended Programs */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Recommended Programs</h2>
-            <button className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center">
-              View All <ArrowRight className="h-4 w-4 ml-1" />
-            </button>
+     
+    <div className="space-y-6">
+      {/* Search Section */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <input
+              type="text"
+              placeholder="Job title or keyword"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
+          <div className="relative">
+            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <input
+              type="text"
+              placeholder="Location"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+            Search Jobs
+          </button>
         </div>
       </div>
+
+      {/* Filters and Results */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+       
+        <div className="lg:col-span-3 space-y-4">
+        {/* Display filteredUniversities instead of Universities */}
+{programs.length === 0 ? (
+  <p className="text-center text-gray-600 text-lg">
+    {searchTerm ? `No results found for "${searchTerm}".` : 'No programs found. Check your database data or API endpoint.'}
+  </p>
+) : (
+  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-6xl mx-auto ">
+    {programs.map((program, index) => ( 
+    
+      <div key={program.LINK || index} className="rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-blue-100 bg-gradient-to-r from-blue-200 to-purple-200">
+        <div className="p-6 ">
+
+          {/* SCHOOL is the institution name from your DB */}
+          <h2 className="text-2xl font-semibold text-blue-800 mb-2">{program.PROGRAM}</h2>
+
+          {/* PROGRAM name */}
+          {program.SCHOOL && (
+            <p className="text-gray-700 text-sm mb-1">
+              <span className="font-medium">Program:</span> {program.PROGRAM} ({program.TYPE})
+            </p>
+          )}
+
+          {/* Country, State, City */}
+          {(program.COUNTRY || program.STATE || program.CITY) && (
+            <p className="text-gray-700 text-sm mb-1">
+              <span className="font-medium">Location:</span>
+              {program.CITY && program.CITY !== "NA" ? `${program.CITY}, ` : ''}
+              {program.STATE && program.STATE !== "NA" ? `${program.STATE}` : ''}
+              {program.COUNTRY && program.COUNTRY !== "NA" ? ` (${program.COUNTRY})` : ''}
+            </p>
+          )}
+
+          {/* Link to the program/university */}
+          {program.LINK && (
+            <p className="text-gray-700 text-sm mb-1">
+              <span className="font-medium">Website:</span>{' '}
+              <a
+                href={program.LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline break-all"
+              >
+                {program.LINK}
+              </a>
+            </p>
+          )}
+
+          {/* Other relevant fields you might want to display, e.g., Department, Delivery, Duration */}
+          {program.DEPARTMENT && program.DEPARTMENT !== "Not Available" && (
+            <p className="text-gray-700 text-sm mb-1">
+              <span className="font-medium">Department:</span> {program.DEPARTMENT}
+            </p>
+          )}
+          {program.DELIVERY && program.DELIVERY !== "NA" && (
+            <p className="text-gray-700 text-sm mb-1">
+              <span className="font-medium">Delivery:</span> {program.DELIVERY}
+            </p>
+          )}
+          {program.DURATION && program.DURATION !== "NA" && (
+            <p className="text-gray-700 text-sm">
+              <span className="font-medium">Duration:</span> {program.DURATION}
+            </p>
+          )}
+
+          {/* You can add more academic/ranking details here, similar to the ProgramDetailCard */}
+          {/* For example, if you want to show WORLD_RANK */}
+          {program.WORLD_RANK && program.WORLD_RANK !== "NA" && (
+             <p className="text-gray-700 text-sm mt-2">
+               <span className="font-medium">World Rank:</span> {program.WORLD_RANK}
+             </p>
+          )}
+
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+        </div>
+      </div>
+    </div>
+  
     </div>
   );
 }
