@@ -6,7 +6,10 @@ import { Briefcase, MapPin, Search, DollarSign, Clock, Filter, ArrowRight } from
 
 export default function HigherStudiesPage() {
  const [universities, setUniversities] = useState([]);
- const [programs, setPrograms] = useState([]); // Assuming you might want to fetch programs later
+ const [programs, setPrograms] = useState([]); 
+ const [programCount, setProgramCount] = useState(null);
+ const [countryCount, setCountryCount] = useState(null);
+ const [universityCount, setUniversityCount] = useState(null);
   const [filteredUniversities, setFilteredUniversities] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -18,6 +21,25 @@ export default function HigherStudiesPage() {
     const fetchUniversityPrograms = async () => {
       try {
         const response = await fetch('http://localhost:5000/uni/programs/get?limit=20');
+         const count = await fetch('http://localhost:5000/uni/programs/count');
+         const programCount = await fetch('http://localhost:5000/uni/programs/programs');
+        const countryCount = await fetch('http://localhost:5000/uni/programs/countries');
+         if (!count.ok) {
+          throw new Error(`HTTP error! status: ${count.status} for count`);
+        }
+        const countUniversity = await count.json();
+        setUniversityCount(countUniversity.count);
+       
+        const countProgram = await programCount.json();
+        setProgramCount(countProgram.count);
+
+
+
+        const countCountry = await countryCount.json();
+        setCountryCount(countCountry.count);
+        
+
+
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -112,7 +134,24 @@ export default function HigherStudiesPage() {
     
     console.log("Search button clicked for:", searchTerm);
   };
+const formatCurrency = (value, currencyCode = 'USD', locale = 'en-US') => {
+  if (typeof value !== 'number' || isNaN(value)) {
+    return 'N/A';
+  }
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currencyCode,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+};
 
+const formatLivingCostIndex = (value) => {
+  if (typeof value !== 'number' || isNaN(value)) {
+    return 'N/A';
+  }
+  return `${value} (Global Avg = 100)`;
+};
 
   if (loading) {
     return (
@@ -134,39 +173,18 @@ export default function HigherStudiesPage() {
   return (
     <div className="space-y-6">
 
-      {/* Search Section */}
-      <div className="bg-white text-black rounded-xl p-6 shadow-sm border border-gray-200">
-        <h1 className="text-xl font-semibold text-gray-900 mb-4">Find Your Perfect Study Program</h1>
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-              type="text"
-              placeholder="Search universities or programs..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={searchTerm} // Bind input value to searchTerm state
-              onChange={handleSearchChange} // Update searchTerm on every keystroke
-            />
-          </div>
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            onClick={handleSearchButtonClick} // Attach click handler
-          >
-            Search
-          </button>
-        </div>
-      </div>
+    
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-10">
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
               <GraduationCap className="h-5 w-5 text-blue-600" />
             </div>
             <div className="ml-3">
-              <p className="text-sm text-gray-500">Top Universities</p>
-              <p className="text-lg font-semibold text-gray-900">500+</p>
+              <p className="text-sm text-gray-500">Universities</p>
+              <p className="text-lg font-semibold text-gray-900">{universityCount }</p>
             </div>
           </div>
         </div>
@@ -178,7 +196,7 @@ export default function HigherStudiesPage() {
             </div>
             <div className="ml-3">
               <p className="text-sm text-gray-500">Study Programs</p>
-              <p className="text-lg font-semibold text-gray-900">2,000+</p>
+              <p className="text-lg font-semibold text-gray-900">{programCount}</p>
             </div>
           </div>
         </div>
@@ -190,70 +208,14 @@ export default function HigherStudiesPage() {
             </div>
             <div className="ml-3">
               <p className="text-sm text-gray-500">Countries</p>
-              <p className="text-lg font-semibold text-gray-900">50+</p>
+              <p className="text-lg font-semibold text-gray-900">{countryCount}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Recommended Universities - This now displays filteredUniversities */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6 ">
-          <div className="flex items-center justify-between mb-4 ">
-            <h2 className="text-lg font-semibold text-gray-900">Top Universities</h2>
-            <button className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center">
-              View All <ArrowRight className="h-4 w-4 ml-1" />
-            </button>
-          </div>
-
-          <div className="divide-y  divide-gray-200 ">
-            {/* Display filteredUniversities instead of Universities */}
-            {filteredUniversities.length === 0 ? (
-              <p className="text-center text-gray-600 text-lg">
-                {searchTerm ? `No results found for "${searchTerm}".` : 'No institutions found. Check your database data or API endpoint.'}
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto ">
-                {filteredUniversities.map((institution) => (
-                  <div key={institution.id} className=" rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-blue-100 bg-gradient-to-r from-blue-200 to-purple-200">
-                    <div className="p-6 ">
-
-                      <h2 className="text-2xl font-semibold text-blue-800 mb-2">{institution.name}</h2>
-
-                      {institution.country && (
-                        <p className="text-gray-700 text-sm mb-1">
-                          <span className="font-medium">Country:</span> {institution.country}
-                          {institution['state-province'] && ` (${institution['state-province']})`}
-                        </p>
-                      )}
-
-                      {institution.web_pages && institution.web_pages.length > 0 && (
-                        <p className="text-gray-700 text-sm mb-1">
-                          <span className="font-medium">Website:</span>{' '}
-                          <a
-                            href={institution.web_pages[0]}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                          >
-                            {institution.web_pages[0]}
-                          </a>
-                        </p>
-                      )}
-
-                      {institution.domains && institution.domains.length > 0 && (
-                        <p className="text-gray-700 text-sm">
-                          <span className="font-medium">Domains:</span> {institution.domains.join(', ')}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      { /*Recommended Universities - This now displays filteredUniversities */}
+     
 
       {/* Recommended Programs */}
      
@@ -277,95 +239,83 @@ export default function HigherStudiesPage() {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+          {/* <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
             Search Jobs
-          </button>
+          </button> */}
         </div>
       </div>
 
       {/* Filters and Results */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-       
-        <div className="lg:col-span-3 space-y-4">
-        {/* Display filteredUniversities instead of Universities */}
-{programs.length === 0 ? (
-  <p className="text-center text-gray-600 text-lg">
-    {searchTerm ? `No results found for "${searchTerm}".` : 'No programs found. Check your database data or API endpoint.'}
-  </p>
-) : (
-  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-6xl mx-auto ">
-    {programs.map((program, index) => ( 
-    
-      <div key={program.LINK || index} className="rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-blue-100 bg-gradient-to-r from-blue-200 to-purple-200">
-        <div className="p-6 ">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div className="lg:col-span-3 space-y-4">
+    {programs.length === 0 ? (
+      <p className="text-center text-gray-600 text-lg">
+        {searchTerm ? `No results found for "${searchTerm}".` : 'No programs found.'}
+      </p>
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-black">
+        {programs.map((program, index) => {
+          const tuition = parseFloat(program.Tuition_USD) || 0;
+          const rent = parseFloat(program.Rent_USD) || 0;
+          const visaFee = parseFloat(program.Visa_Fee_USD) || 0;
+          const insurance = parseFloat(program.Insurance_USD) || 0;
+          const durationYears = parseFloat(program.Duration_Years) || 0;
+          const exchangeRate = parseFloat(program.Exchange_Rate) || 1.00;
 
-          {/* SCHOOL is the institution name from your DB */}
-          <h2 className="text-2xl font-semibold text-blue-800 mb-2">{program.PROGRAM}</h2>
+          const totalTuitionCost = tuition * durationYears;
+          const totalRentCost = rent * 12 * durationYears;
+          const totalOtherFees = visaFee + insurance;
+          const totalEstimatedCostUSD = totalTuitionCost + totalRentCost + totalOtherFees;
 
-          {/* PROGRAM name */}
-          {program.SCHOOL && (
-            <p className="text-gray-700 text-sm mb-1">
-              <span className="font-medium">Program:</span> {program.PROGRAM} ({program.TYPE})
-            </p>
-          )}
-
-          {/* Country, State, City */}
-          {(program.COUNTRY || program.STATE || program.CITY) && (
-            <p className="text-gray-700 text-sm mb-1">
-              <span className="font-medium">Location:</span>
-              {program.CITY && program.CITY !== "NA" ? `${program.CITY}, ` : ''}
-              {program.STATE && program.STATE !== "NA" ? `${program.STATE}` : ''}
-              {program.COUNTRY && program.COUNTRY !== "NA" ? ` (${program.COUNTRY})` : ''}
-            </p>
-          )}
-
-          {/* Link to the program/university */}
-          {program.LINK && (
-            <p className="text-gray-700 text-sm mb-1">
-              <span className="font-medium">Website:</span>{' '}
-              <a
-                href={program.LINK}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline break-all"
-              >
-                {program.LINK}
-              </a>
-            </p>
-          )}
-
-          {/* Other relevant fields you might want to display, e.g., Department, Delivery, Duration */}
-          {program.DEPARTMENT && program.DEPARTMENT !== "Not Available" && (
-            <p className="text-gray-700 text-sm mb-1">
-              <span className="font-medium">Department:</span> {program.DEPARTMENT}
-            </p>
-          )}
-          {program.DELIVERY && program.DELIVERY !== "NA" && (
-            <p className="text-gray-700 text-sm mb-1">
-              <span className="font-medium">Delivery:</span> {program.DELIVERY}
-            </p>
-          )}
-          {program.DURATION && program.DURATION !== "NA" && (
-            <p className="text-gray-700 text-sm">
-              <span className="font-medium">Duration:</span> {program.DURATION}
-            </p>
-          )}
-
-          {/* You can add more academic/ranking details here, similar to the ProgramDetailCard */}
-          {/* For example, if you want to show WORLD_RANK */}
-          {program.WORLD_RANK && program.WORLD_RANK !== "NA" && (
-             <p className="text-gray-700 text-sm mt-2">
-               <span className="font-medium">World Rank:</span> {program.WORLD_RANK}
-             </p>
-          )}
-
-        </div>
+          return (
+            <div
+              key={`${program.University}-${program.Program}-${index}`}
+              className="rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-blue-100 bg-gradient-to-r from-blue-50 to-purple-50 flex flex-col"
+            >
+              <div className="p-6 flex-grow from-blue-50 to-purple-50">
+                <h2 className="text-2xl font-semibold text-black mb-2">{program.University}</h2>
+                {program.Program && (
+                  <p className="text-gray-700 text-lg font-medium mb-1">
+                    {program.Program} ({program.Level})
+                  </p>
+                )}
+                {(program.Country || program.City) && (
+                  <p className="text-gray-700 text-sm mb-1">
+                    <span className="font-medium">Location:</span>
+                    {program.City ? `${program.City}, ` : ''}
+                    {program.Country ? `${program.Country}` : ''}
+                  </p>
+                )}
+                {program.Duration_Years && (
+                  <p className="text-gray-700 text-sm mb-1">
+                    <span className="font-medium">Duration:</span> {durationYears} Year{durationYears !== 1 ? 's' : ''}
+                  </p>
+                )}
+                <div className="mt-4 pt-4 ">
+                  {/* <h3 className="text-lg font-semibold text-blue-700 mb-2">Estimated Annual Costs</h3> */}
+                  {/* <div className="grid grid-cols-1 gap-1 text-gray-700 text-sm">
+                    <p><span className="font-medium">Tuition:</span> {formatCurrency(tuition, 'USD')}</p>
+                    <p><span className="font-medium">Monthly Rent:</span> {formatCurrency(rent, 'USD')}</p>
+                    <p><span className="font-medium">Visa Fee:</span> {formatCurrency(visaFee, 'USD')} (one-time)</p>
+                    <p><span className="font-medium">Insurance:</span> {formatCurrency(insurance, 'USD')} (annual)</p>
+                    <p><span className="font-medium">Living Cost Index:</span> {formatLivingCostIndex(program.Living_Cost_Index)}</p>
+                    <p><span className="font-medium">Exchange Rate:</span> 1 USD = {exchangeRate} Local</p>
+                  </div> */}
+                </div>
+              </div>
+              <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 border-t border-blue-200 rounded-b-xl">
+                <p className="text-lg font-bold text-black">
+                  Total Estimated Program Cost:
+                  <span className="text-2xl">{formatCurrency(totalEstimatedCostUSD, 'USD')}</span>
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </div>
-    ))}
+    )}
   </div>
-)}
-        </div>
-      </div>
+</div>
     </div>
   
     </div>
