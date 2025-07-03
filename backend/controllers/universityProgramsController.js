@@ -5,12 +5,12 @@ const getAllUniversityPrograms = async(req, res) => {
     const{page=2, limit = 20, country} = req.query
     const offset = (page- 1)*limit;
     try{
-        let query = 'SELECT * FROM university_programs'
+        let query = 'SELECT * FROM merged_university_programs'
         const params = []
         let conditions = []
           
        
-        query += ` ORDER BY "University" LIMIT $${params.length + 1} OFFSET $${params.length + 2}`
+        query += ` ORDER BY "university" LIMIT $${params.length + 1} OFFSET $${params.length + 2}`
 
 
 
@@ -36,7 +36,7 @@ const getUniversityCount = async(req, res)=>{
 
 
     try{
-         const result = await pool.query('SELECT COUNT(DISTINCT "University") AS unique_uni FROM university_programs');
+         const result = await pool.query('SELECT COUNT(DISTINCT university) AS unique_uni FROM merged_university_programs');
           res.json({count : parseInt(result.rows[0].unique_uni, 10)});
 
     } catch(err){
@@ -51,7 +51,7 @@ const getUniversityCount = async(req, res)=>{
 
 const getProgramsCount = async(req, res) => {
        try{
-            const resut = await pool.query('SELECT COUNT(DISTINCT "Program") AS unique_program FROM university_programs');
+            const resut = await pool.query('SELECT COUNT(DISTINCT "program") AS unique_program FROM merged_university_programs');
             res.json({count: parseInt(resut.rows[0].unique_program, 10)});
        } catch(err){
          console.error('Error fetching unique programs count:', err);
@@ -62,7 +62,7 @@ const getProgramsCount = async(req, res) => {
 
 const getCountries = async(req, res) => {
      try{
-            const resut = await pool.query('SELECT COUNT(DISTINCT "Country") AS unique_country FROM university_programs');
+            const resut = await pool.query('SELECT COUNT(DISTINCT "country") AS unique_country FROM merged_university_programs');
             res.json({count: parseInt(resut.rows[0].unique_country, 10)});
        } catch(err){
          console.error('Error fetching unique country count:', err);

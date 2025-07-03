@@ -1,13 +1,13 @@
 "use client"
-import Button from "@/app/component/ui/button"
+
+// Correct import for redirect in App Router client components
+import { redirect } from "next/navigation"; 
 
 export default function Page() {
-  return ( 
-  <>
-  <h1 className="text-red-800 bg-amber-200">Hello, Next.js!, jerinaaaaa</h1>
- <Button>Submit</Button>
-<Button>Cancel</Button>
-<Button >Preview</Button>
-  </>
-)
+  // This will redirect any visitor from '/' to '/dashboard'
+  redirect('/dashboard');
+
+  // This return statement will effectively never be reached because redirect() throws an error.
+  // It's common practice to just return null or nothing after a redirect for clarity.
+  return null; 
 }

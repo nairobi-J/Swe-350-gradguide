@@ -1,11 +1,11 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function AuthPage() { // Renamed to AuthPage for broader scope
   const [isSignIn, setIsSignIn] = useState(false); // State to toggle between Sign In and Sign Up
-
+ 
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
