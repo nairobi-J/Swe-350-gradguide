@@ -255,42 +255,55 @@ const formatLivingCostIndex = (value) => {
     ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-black">
         {programs.map((program, index) => {
-          const tuition = parseFloat(program.Tuition_USD) || 0;
-          const rent = parseFloat(program.Rent_USD) || 0;
-          const visaFee = parseFloat(program.Visa_Fee_USD) || 0;
-          const insurance = parseFloat(program.Insurance_USD) || 0;
-          const durationYears = parseFloat(program.Duration_Years) || 0;
-          const exchangeRate = parseFloat(program.Exchange_Rate) || 1.00;
-
+          const tuition = parseFloat(program.tuition_usd) || 0;
+          const rent = parseFloat(program.rent_usd) || 0;
+          const visaFee = parseFloat(program.visa_fee_usd) || 0;
+          const insurance = parseFloat(program.insurance_usd) || 0;
+          const durationYears = parseFloat(program.duration_years) || 0;
+          const exchangeRate = parseFloat(program.exchange_rate) || 1.00;
+          const universityWebsite = program.link
           const totalTuitionCost = tuition * durationYears;
           const totalRentCost = rent * 12 * durationYears;
           const totalOtherFees = visaFee + insurance;
           const totalEstimatedCostUSD = totalTuitionCost + totalRentCost + totalOtherFees;
 
           return (
-            <div
-              key={`${program.University}-${program.Program}-${index}`}
+            <a
+   key={`${program.university}-${program.program}-${index}`} // Key is on the outermost <a> tag
+      href={universityWebsite} // <-- DYNAMICALLY USES program.link
+      target="_blank" // Opens in a new tab
+      rel="noopener noreferrer" // Security best practice
+      className="rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-blue-100 bg-gradient-to-r from-blue-50 to-purple-50 flex flex-col cursor-pointer"
+> <div
+              key={`${program.university}-${program.program}-${index}`}
               className="rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-blue-100 bg-gradient-to-r from-blue-50 to-purple-50 flex flex-col"
             >
+              
               <div className="p-6 flex-grow from-blue-50 to-purple-50">
                 <h2 className="text-2xl font-semibold text-black mb-2">{program.University}</h2>
-                {program.Program && (
+                 {program.university && (
+                  <h1 className="text-gray-700 text-lg font-bold mb-1">
+                    {program.university} 
+                  </h1>
+                )}
+                {program.program && (
                   <p className="text-gray-700 text-lg font-medium mb-1">
-                    {program.Program} ({program.Level})
+                    {program.program} ({program.level})
                   </p>
                 )}
-                {(program.Country || program.City) && (
+                {(program.country || program.city) && (
                   <p className="text-gray-700 text-sm mb-1">
                     <span className="font-medium">Location:</span>
-                    {program.City ? `${program.City}, ` : ''}
-                    {program.Country ? `${program.Country}` : ''}
+                    {program.city ? `${program.city}, ` : ''}
+                    {program.country ? `${program.country}` : ''}
                   </p>
                 )}
-                {program.Duration_Years && (
+                {program.duration_years && (
                   <p className="text-gray-700 text-sm mb-1">
                     <span className="font-medium">Duration:</span> {durationYears} Year{durationYears !== 1 ? 's' : ''}
                   </p>
                 )}
+                 
                 <div className="mt-4 pt-4 ">
                   {/* <h3 className="text-lg font-semibold text-blue-700 mb-2">Estimated Annual Costs</h3> */}
                   {/* <div className="grid grid-cols-1 gap-1 text-gray-700 text-sm">
@@ -309,7 +322,8 @@ const formatLivingCostIndex = (value) => {
                   <span className="text-2xl">{formatCurrency(totalEstimatedCostUSD, 'USD')}</span>
                 </p>
               </div>
-            </div>
+            </div></a>
+           
           );
         })}
       </div>
