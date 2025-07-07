@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database Service
+  db:
+    image: postgres:15-alpine # Using a specific, lightweight PostgreSQL version
+    container_name: gradguide_db
+    environment:
+     
+      POSTGRES_DB: Gradguide       # Matches database name from your URL
+      POSTGRES_USER: postgres     # Matches username from your URL
+      POSTGRES_PASSWORD: jerin    # Matches password from your URL
+    volumes:
+      - db_data:/var/lib/postgresql/data # Persist database data outside the container
+    ports:
+      # Expose PostgreSQL port to the host for local access/debugging (optional for prod)
+      - "5432:5432"
+    healthcheck: # Health check to ensure DB is ready before backend attempts to connect
+      test: ["CMD-SHELL", "pg_isready -U postgres -d Gradguide"] # Use 'postgres' user and 'Gradguide' DB
+      interval: 5s
+      timeout: 5s
+      retries: 5 # Retry 5 times before failing
+
+  # Node.js Backend Service
+  backend:
+    build:
+      context: ./backend # Path to your backend's Dockerfile relative to docker-compose.yml
+    container_name: gradguide_backend
+    ports:
+     
+      # This exposes backend port 5000 to the host machine.
+      - "5000:5000"
+    environment:
+      # !! IMPORTANT: Updated to match your exact user/password/db from your URL.
+      # 'db' is the service name defined above, Docker Compose handles internal networking.
+      DATABASE_URL: postgresql://postgres:jerin@db:5432/Gradguide
+      PORT: 5000 # Explicitly set the port if your Node.js app uses process.env.PORT
+      NODE_ENV: production # Set Node.js environment to production
+    depends_on:
+      db:
+        condition: service_healthy # Ensure DB is healthy before starting the backend
+    networks:
+      - gradguide_network # Use a custom network for inter-service communication
+
+  # Next.js Frontend Service
+  frontend:
+    build:
+      context: ./frontend # Path to your frontend's Dockerfile relative to docker-compose.yml
+    container_name: gradguide_frontend
+    ports:
+      - "3000:3000" # Map host port 3000 to container port 3000 (Next.js app port)
+    environment:
+      # This is for the Next.js build and runtime. If your Next.js app's client-side code
+      # needs a direct backend URL before rewrites kick in (less common with /api proxy),
+      # it would go here. With Nginx proxy on VPS, this often isn't directly used for client-side.
+      NEXT_PUBLIC_BACKEND_URL: http://localhost:5000 # Example, adapt if your frontend code needs a public URL here
+      NODE_ENV: production # Set Next.js environment to production
+    depends_on:
+      - backend # Frontend depends on backend being up
+    networks:
+      - gradguide_network
+
+# Define volumes for persistent data (e.g., your PostgreSQL database data)
+volumes:
+  db_data:
+
+# Define a custom network for better isolation and inter-service communication
+networks:
+  gradguide_network:
+    driver: bridge
