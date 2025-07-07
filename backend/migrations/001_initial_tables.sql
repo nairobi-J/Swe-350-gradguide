@@ -147,3 +147,34 @@ CREATE INDEX idx_universities_name ON universities(name);
 
 COMMIT;
 
+
+--jerin
+CREATE TABLE university_programs (
+    "SCHOOL" TEXT,                   -- Changed to TEXT
+    "STATE" TEXT,                    -- Changed to TEXT
+    "CITY" TEXT,                     -- Changed to TEXT
+    "NOC" TEXT,                      -- Changed to TEXT
+    "PROGRAM" TEXT,
+    "TYPE" TEXT,                     -- Changed to TEXT
+    "DEPARTMENT" TEXT,               -- Changed to TEXT
+    "DELIVERY" TEXT,                 -- Changed to TEXT
+    "DURATION" TEXT,                 -- Changed to TEXT
+    "PREREQ" TEXT,
+    "LINK" TEXT,
+    "LOC_LAT" NUMERIC(10, 7),
+    "LOC_LONG" NUMERIC(10, 7),
+    "WORLD_RANK" TEXT,               -- Stays TEXT
+    "COUNTRY" TEXT,                  -- Changed to TEXT
+    "TEACHING" TEXT,                 -- Stays TEXT
+    "INTERNATIONAL" TEXT,            -- Stays TEXT
+    "RESEARCH" TEXT,                 -- Stays TEXT
+    "CITATIONS" TEXT,                -- Stays TEXT
+    "INCOME" TEXT,                   -- Stays TEXT
+    "TOTAL_SCORE" TEXT,              -- Stays TEXT
+    "NUM_STUDENTS" TEXT,             -- Stays TEXT
+    "STUDENT_STAFF_RATIO" TEXT,      -- Stays TEXT
+    "INTERNATIONAL_STUDENTS" TEXT,   -- Stays TEXT
+    "F_M_RATIO" TEXT,                -- Stays TEXT
+    "YEAR" TEXT,                     -- Stays TEXT
+    "timesData" TEXT
+);
