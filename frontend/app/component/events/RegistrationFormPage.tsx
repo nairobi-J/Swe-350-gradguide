@@ -6,6 +6,8 @@ import PaymentSimulationModal from '../modals/PaymentSimulationModal'; // Adjust
 import ConfirmationModal from '../modals/ConfirmationModal'; // Adjust import path
 import LoadingSpinner from '../shared/LoadingSpinner';
 import { Event, Registration } from '../types';
+import axios from 'axios';
+
 
 interface RegistrationFormPageProps {
   event: Event | null; // Can be null if data is loading
@@ -76,6 +78,7 @@ const RegistrationFormPage: React.FC<RegistrationFormPageProps> = ({ event, onFi
     if (event.isPaid) {
       setIsPaymentModalOpen(true);
     } else {
+      
       await finalizeRegistrationProcess(formData, null);
     }
   };
@@ -83,7 +86,14 @@ const RegistrationFormPage: React.FC<RegistrationFormPageProps> = ({ event, onFi
   const finalizeRegistrationProcess = async (data: { [key: string]: string }, paymentDetails: { amount: number; transactionId: string } | null) => {
     setIsLoading(true);
     const registrationId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`; // Dummy ID
-
+    await axios.post('http://localhost:5000/regform/submit/?id=33',{
+        userId: 1,
+        responses: formData
+      },
+        {headers:{
+         "Content-Type": 'application/json',
+      }
+    })
     const registrationData: Registration = {
       id: registrationId,
       eventId: event.id,
