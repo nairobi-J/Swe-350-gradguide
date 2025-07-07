@@ -1,0 +1,33 @@
+CREATE TABLE university_programs (
+    "SCHOOL" TEXT,                   -- Changed to TEXT
+    "STATE" TEXT,                    -- Changed to TEXT
+    "CITY" TEXT,                     -- Changed to TEXT
+    "NOC" TEXT,                      -- Changed to TEXT
+    "PROGRAM" TEXT,
+    "TYPE" TEXT,                     -- Changed to TEXT
+    "DEPARTMENT" TEXT,               -- Changed to TEXT
+    "DELIVERY" TEXT,                 -- Changed to TEXT
+    "DURATION" TEXT,                 -- Changed to TEXT
+    "PREREQ" TEXT,
+    "LINK" TEXT,
+    "LOC_LAT" NUMERIC(10, 7),
+    "LOC_LONG" NUMERIC(10, 7),
+    "WORLD_RANK" TEXT,               -- Stays TEXT
+    "COUNTRY" TEXT,                  -- Changed to TEXT
+    "TEACHING" TEXT,                 -- Stays TEXT
+    "INTERNATIONAL" TEXT,            -- Stays TEXT
+    "RESEARCH" TEXT,                 -- Stays TEXT
+    "CITATIONS" TEXT,                -- Stays TEXT
+    "INCOME" TEXT,                   -- Stays TEXT
+    "TOTAL_SCORE" TEXT,              -- Stays TEXT
+    "NUM_STUDENTS" TEXT,             -- Stays TEXT
+    "STUDENT_STAFF_RATIO" TEXT,      -- Stays TEXT
+    "INTERNATIONAL_STUDENTS" TEXT,   -- Stays TEXT
+    "F_M_RATIO" TEXT,                -- Stays TEXT
+    "YEAR" TEXT,                     -- Stays TEXT
+    "timesData" TEXT
+);
+
+COPY university_programs("SCHOOL","STATE","CITY","NOC","PROGRAM","TYPE","DEPARTMENT","DELIVERY","DURATION","PREREQ","LINK","LOC_LAT","LOC_LONG","WORLD_RANK","COUNTRY","TEACHING","INTERNATIONAL","RESEARCH","CITATIONS","INCOME","TOTAL_SCORE","NUM_STUDENTS","STUDENT_STAFF_RATIO","INTERNATIONAL_STUDENTS","F_M_RATIO","YEAR","timesData")
+FROM 'Your patj csv'
+WITH (FORMAT CSV, HEADER TRUE, ENCODING 'UTF8');
