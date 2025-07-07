@@ -10,6 +10,8 @@ const addQuestion =  async (req, res) => {
          RETURNING *`,
         [eventId, userId, questionText]
       );
+
+      
       
       res.status(201).json(result.rows[0]);
     } catch (error) {
