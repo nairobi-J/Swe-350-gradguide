@@ -1,177 +1,128 @@
+// frontend/app/component/events/RegistrationFormPage.tsx
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
-import PaymentSimulationModal from '../modals/PaymentSimulationModal';
-import ConfirmationModal from '../modals/ConfirmationModal';
-import LoadingSpinner from '../shared/LoadingSpinner';
-import { Event, Registration } from '../types';
+// Removed: PaymentSimulationModal import
+// Removed: ConfirmationModal import
+import { Event, RegistrationField } from '../types'; // Removed Registration import as not needed for simplified functions
 import axios from 'axios';
+
+// Removed: Registration and related interfaces/types not strictly needed for basic rendering logic here.
 
 interface RegistrationModalProps {
   event: Event | null;
   isOpen: boolean;
   onClose: () => void;
-  onFinalizeRegistration: (registration: Registration) => void;
-  setMessage: (message: string | null) => void;
-  setMessageType: (type: 'success' | 'error' | 'info') => void;
+  // Removed onFinalizeRegistration, setMessage, setMessageType as they are part of the removed complex logic
 }
 
 const RegistrationModal: React.FC<RegistrationModalProps> = ({
   event,
   isOpen,
   onClose,
-  onFinalizeRegistration,
-  setMessage,
-  setMessageType
+  // Removed onFinalizeRegistration, setMessage, setMessageType from destructuring
 }) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [confirmationDetails, setConfirmationDetails] = useState<Registration['confirmationData'] | null>(null);
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [isFieldsLoading, setIsFieldsLoading] = useState(true);
+  const [fetchedRegistrationFields, setFetchedRegistrationFields] = useState<RegistrationField[] | null>(null);
 
+  // useEffect to fetch registration fields (remains the same)
   useEffect(() => {
-    if (event && isOpen) {
-      const initialData: Record<string, string> = {};
-      const initialErrors: Record<string, string> = {};
-      
-      event.registrationFields.forEach(field => {
-        initialData[field.name] = '';
-        if (field.required) {
-          initialErrors[field.name] = '';
-        }
-      });
-      
-      setFormData(initialData);
-      setErrors(initialErrors);
+    if (event?.id && isOpen) {
+      setIsFieldsLoading(true);
+      //console.log(event);
+      axios.get(`http://localhost:5000/event/registration?event_id=${event.id}`)
+        .then(response => {
+          if (Array.isArray(response.data)) {
+            setFetchedRegistrationFields(response.data);
+            console.log(response.data);
+          } else {
+            console.error("Backend returned non-array for registration fields:", response.data);
+            setFetchedRegistrationFields([]); // Set to empty array to prevent map error
+          }
+          setIsFieldsLoading(false);
+        })
+        .catch(error => {
+          console.error("Error fetching registration fields:", error);
+          setIsFieldsLoading(false);
+          // For now, no message display, just console log.
+        });
+    } else if (!isOpen) {
+      setFetchedRegistrationFields(null);
+      setIsFieldsLoading(true);
     }
-  }, [event, isOpen]);
+  }, [event?.id, isOpen]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // useEffect for initial form data (remains the same, but simplified)
+  useEffect(() => {
+    if (event && isOpen && fetchedRegistrationFields) {
+      const initialData: Record<string, string> = {};
+      fetchedRegistrationFields.forEach(field => {
+        initialData[field.name] = '';
+      });
+      setFormData(initialData);
+      setErrors({}); // Clear errors
+    }
+  }, [event, isOpen, fetchedRegistrationFields]);
+
+  // handleChange function (remains the same, but simplified error handling)
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Removed complex error state update for simplicity
+    setErrors(prev => ({ ...prev, [name]: '' }));
+  }, [setFormData, setErrors]);
 
-    const field = event?.registrationFields.find(f => f.name === name);
-    if (field?.required) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: value.trim() ? '' : 'This field is required'
-      }));
-    }
-  };
-
-  const validateForm = (): boolean => {
-    if (!event) return false;
-
-    const newErrors: Record<string, string> = {};
-    let isValid = true;
-
-    event.registrationFields.forEach(field => {
-      if (field.required && !formData[field.name]?.trim()) {
-        newErrors[field.name] = 'This field is required';
-        isValid = false;
-      }
-    });
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Simplified handleSubmit and validation (just for basic rendering)
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      setMessage("Please fill in all required fields");
-      setMessageType('error');
-      return;
-    }
+    console.log("Form submitted locally with data:", formData);
+    // No backend call, no payment, no confirmation for now.
+    onClose(); // Just close the modal on submit for now.
+  }, [formData, onClose]);
 
-    if (event?.isPaid) {
-      setIsPaymentModalOpen(true);
-    } else {
-      await finalizeRegistrationProcess(formData, null);
-    }
-  };
-
-  const finalizeRegistrationProcess = async (
-    data: Record<string, string>,
-    paymentDetails: { amount: number; transactionId: string } | null
-  ) => {
-    if (!event) return;
-
-    setIsLoading(true);
-    
-    try {
-      await axios.post('http://localhost:5000/regform/submit/?id=33', {
-        userId: 1,
-        responses: data
-      }, {
-        headers: { "Content-Type": 'application/json' }
-      });
-
-      const registrationId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-      
-      const registrationData: Registration = {
-        id: registrationId,
-        eventId: event.id,
-        eventName: event.name,
-        userId: 'user-123',
-        formData: JSON.stringify(data),
-        status: event.isPaid ? 'paid' : 'confirmed',
-        paymentDetails: paymentDetails,
-        registeredAt: new Date(),
-        confirmationData: {
-          joinLink: event.location,
-          downloadContent: `
-Registration Confirmed for: ${event.name}
-Date: ${event.date}
-Time: ${event.time}
-${event.type === 'online' ? 'Online Link: ' + event.location : 'Location: ' + event.location}
-Your Registration ID: ${registrationId}
-
-Submitted Details:
-${Object.entries(data).map(([key, value]) => 
-  `${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${value}`
-).join('\n')}
-
-Thank you for your registration!
-`,
-          downloadFileName: `registration_${event.name.replace(/\s/g, '_')}_${registrationId}.txt`,
-          registrationId: registrationId,
-        }
-      };
-
-      onFinalizeRegistration(registrationData);
-      setConfirmationDetails(registrationData.confirmationData);
-      setIsConfirmationModalOpen(true);
-      setMessage("Registration successful!");
-      setMessageType('success');
-      
-    } catch (error) {
-      setMessage("Registration failed. Please try again.");
-      setMessageType('error');
-      console.error("Registration error:", error);
-    } finally {
-      setIsLoading(false);
-      setIsPaymentModalOpen(false);
-    }
-  };
-
-  const handlePaymentSuccess = async (transactionId: string) => {
-    if (!event) return;
-    await finalizeRegistrationProcess(formData, { 
-      amount: event.price, 
-      transactionId: transactionId 
-    });
-  };
 
   if (!isOpen) return null;
+
+  // Show loading state
+  if (isFieldsLoading) {
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-xl text-gray-700 flex flex-col items-center">
+            <svg className="animate-spin h-8 w-8 text-blue-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Loading form fields...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle case where fields failed to load or no fields are defined
+  // This will also catch if fetchedRegistrationFields is null or empty array.
+  if (!event || !Array.isArray(fetchedRegistrationFields) || fetchedRegistrationFields.length === 0) {
+    console.log("No registration fields found for event or invalid format:", fetchedRegistrationFields);
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-xl text-red-700 flex flex-col items-center">
+            <X className="h-8 w-8 mb-3" />
+            <p>No custom registration fields defined for this event, or data is invalid.</p>
+            <button onClick={onClose} className="mt-4 px-4 py-2 bg-gray-200 rounded-lg">Close</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      
+
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl">
           <button
@@ -180,18 +131,19 @@ Thank you for your registration!
           >
             <X className="h-6 w-6" />
           </button>
-          
+
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
-              Register for {event?.name}
+              Register for {event.name}
             </h2>
             <p className="text-gray-600 mt-1">
               Please fill out the registration form
             </p>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="space-y-4">
-            {event?.registrationFields.map((field) => (
+            {/* --- THIS IS WHERE INPUTS ARE MAPPED AND RENDERED --- */}
+            {fetchedRegistrationFields.map((field) => (
               <div key={field.name} className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
                   {field.label}
@@ -204,9 +156,7 @@ Thank you for your registration!
                     value={formData[field.name] || ''}
                     onChange={handleChange}
                     required={field.required}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                      errors[field.name] ? 'border-red-500' : ''
-                    }`}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     rows={3}
                   />
                 ) : (
@@ -217,51 +167,29 @@ Thank you for your registration!
                     value={formData[field.name] || ''}
                     onChange={handleChange}
                     required={field.required}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                      errors[field.name] ? 'border-red-500' : ''
-                    }`}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 )}
+                {/* Simplified error message display */}
                 {errors[field.name] && (
                   <p className="text-sm text-red-500">{errors[field.name]}</p>
                 )}
               </div>
             ))}
-            
+
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={isLoading}
                 className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                {isLoading ? 'Processing...' : 
-                 event?.isPaid ? `Pay $${event.price.toFixed(2)}` : 'Confirm Registration'}
+                Confirm Registration
               </button>
             </div>
           </form>
         </div>
       </div>
 
-      {event && (
-        <>
-          <PaymentSimulationModal
-            isOpen={isPaymentModalOpen}
-            onClose={() => setIsPaymentModalOpen(false)}
-            event={event}
-            onPaymentSuccess={handlePaymentSuccess}
-          />
-          {confirmationDetails && (
-            <ConfirmationModal
-              isOpen={isConfirmationModalOpen}
-              onClose={() => {
-                setIsConfirmationModalOpen(false);
-                onClose();
-              }}
-              confirmationData={confirmationDetails}
-            />
-          )}
-        </>
-      )}
+      
     </div>
   );
 };

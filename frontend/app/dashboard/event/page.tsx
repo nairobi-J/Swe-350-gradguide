@@ -181,20 +181,7 @@ export default function EventPageClient() {
               currentUserId={currentUserId}
             />
           )}
-          {currentPath.startsWith('/dashboard/register/') && currentEvent && (
-            <RegistrationFormPage
-              event={currentEvent}
-              onFinalizeRegistration={addRegistration}
-              setMessage={setMessage}
-              setMessageType={setMessageType}
-            />
-          )}
-          {currentPath === '/dashboard/my-registrations' && (
-            <MyRegistrationsPage
-              registrations={registrations}
-              currentUserId={currentUserId}
-            />
-          )}
+        
           {!['/dashboard/events', '/dashboard/create-event', '/dashboard/my-registrations'].some(path => currentPath.startsWith(path)) &&
            !currentPath.startsWith('/dashboard/event-details/') &&
            !currentPath.startsWith('/dashboard/register/') && (
