@@ -61,6 +61,7 @@ app.use('/regform',regFormRoutes)
 app.use('/eventFeedback', eventFeedbackRoutes)
 app.use('/eventQuery', eventQueryRoutes)
 
+
 app.post('/auth', authRoutes)
 app.get('/uni', universityRoutes)
 app.get('/uni/programs', universityProgramsRoutes)

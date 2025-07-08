@@ -83,4 +83,22 @@ const deleteEventByID = async(req, res) =>{
 }
 
 
-module.exports = {createEvent, getAllEvent, getEventByID, deleteEventByID}
+const getEventRegistrationFields = async (req, res) => {
+     const {event_id} = req.query
+
+    try {
+         const result = await pool.query(
+            `select * from event_registration_form where event_id = $1`,[event_id]
+    )
+
+    res.status(201).json(result.rows)
+    } catch (error) {
+         res.status(501).json({message: error.message})
+    }
+}
+const registerEvent = async(req, res) => {
+    const {eventId, userId, form}
+}
+
+
+module.exports = {createEvent, getAllEvent, getEventByID, deleteEventByID, getEventRegistrationFields}
