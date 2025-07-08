@@ -96,9 +96,58 @@ const getEventRegistrationFields = async (req, res) => {
          res.status(501).json({message: error.message})
     }
 }
+// Example: In your backend controller file (e.g., eventController.js)
+
+// Handles registration submission
 const registerEvent = async(req, res) => {
-    const {eventId, userId, form}
-}
+    const { eventId, userId, formData } = req.body; 
+
+    try {
+        await pool.query('BEGIN'); // Start transaction
+
+        // Insert into event_registration_response (summary table)
+        const responseResult = await pool.query(
+            `INSERT INTO event_registration_response (event_id, user_id, created_at)
+             VALUES ($1, $2, NOW())
+             RETURNING id`, 
+            [eventId, userId]
+        );
+        const registrationResponseId = responseResult.rows[0].id; // This is your response_id
+
+        // Prepare and insert individual field responses into event_registration_response_data (detail table)
+        const dataInserts = [];
+        const dataValues = [];
+        let paramIndex = 1;
+
+        for (const fieldName in formData) {
+            if (Object.prototype.hasOwnProperty.call(formData, fieldName)) {
+                const fieldValue = formData[fieldName];
+                dataInserts.push(`($${paramIndex++}, $${paramIndex++}, $${paramIndex++})`);
+                dataValues.push(registrationResponseId, fieldName, fieldValue);
+            }
+        }
+
+        if (dataInserts.length > 0) {
+            await pool.query(
+                `INSERT INTO event_registration_response_data (response_id, field_name, field_value)
+                 VALUES ${dataInserts.join(', ')}`,
+                dataValues
+            );
+        }
+
+        await pool.query('COMMIT'); // Commit transaction
+
+        res.status(201).json({ message: 'Registration submitted successfully!', registrationId: registrationResponseId });
+
+    } catch (error) {
+        await pool.query('ROLLBACK'); // Rollback on error
+        console.error('Error submitting registration:', error.message);
+        res.status(500).json({ error: 'Failed to submit registration. Please try again.' });
+    }
+};
+
+// Ensure this route is set up in your eventRoutes:
+// router.post('/register-event', registerEvent);
 
 
-module.exports = {createEvent, getAllEvent, getEventByID, deleteEventByID, getEventRegistrationFields}
+module.exports = {createEvent, getAllEvent, getEventByID, deleteEventByID, getEventRegistrationFields, registerEvent}

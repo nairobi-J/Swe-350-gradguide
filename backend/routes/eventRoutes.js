@@ -9,5 +9,6 @@ router.get('/all', eventController.getAllEvent)
 router.get('/byID', eventController.getEventByID)
 router.get('/registration',eventController.getEventRegistrationFields)
 router.delete('/byID', eventController.deleteEventByID)
+router.post('/register-event', eventController.registerEvent)
 
 module.exports = router
