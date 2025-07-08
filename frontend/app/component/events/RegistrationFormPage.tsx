@@ -2,51 +2,45 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
-// Removed: PaymentSimulationModal import
-// Removed: ConfirmationModal import
-import { Event, RegistrationField } from '../types'; // Removed Registration import as not needed for simplified functions
+import { Event, RegistrationField } from '../types'; // Only Event and RegistrationField needed
 import axios from 'axios';
-
-// Removed: Registration and related interfaces/types not strictly needed for basic rendering logic here.
 
 interface RegistrationModalProps {
   event: Event | null;
   isOpen: boolean;
   onClose: () => void;
-  // Removed onFinalizeRegistration, setMessage, setMessageType as they are part of the removed complex logic
+  // Removed: onFinalizeRegistration, setMessage, setMessageType
 }
 
 const RegistrationModal: React.FC<RegistrationModalProps> = ({
   event,
   isOpen,
   onClose,
-  // Removed onFinalizeRegistration, setMessage, setMessageType from destructuring
+  // Removed: onFinalizeRegistration, setMessage, setMessageType from destructuring
 }) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isFieldsLoading, setIsFieldsLoading] = useState(true);
   const [fetchedRegistrationFields, setFetchedRegistrationFields] = useState<RegistrationField[] | null>(null);
+  const [isLoading, setIsLoading] = useState(false); // For submit button loading state
 
-  // useEffect to fetch registration fields (remains the same)
+  // useEffect to fetch registration fields
   useEffect(() => {
     if (event?.id && isOpen) {
       setIsFieldsLoading(true);
-      //console.log(event);
       axios.get(`http://localhost:5000/event/registration?event_id=${event.id}`)
         .then(response => {
           if (Array.isArray(response.data)) {
             setFetchedRegistrationFields(response.data);
-            console.log(response.data);
           } else {
             console.error("Backend returned non-array for registration fields:", response.data);
-            setFetchedRegistrationFields([]); // Set to empty array to prevent map error
+            setFetchedRegistrationFields([]);
           }
           setIsFieldsLoading(false);
         })
         .catch(error => {
           console.error("Error fetching registration fields:", error);
           setIsFieldsLoading(false);
-          // For now, no message display, just console log.
         });
     } else if (!isOpen) {
       setFetchedRegistrationFields(null);
@@ -54,7 +48,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
     }
   }, [event?.id, isOpen]);
 
-  // useEffect for initial form data (remains the same, but simplified)
+  // useEffect for initial form data
   useEffect(() => {
     if (event && isOpen && fetchedRegistrationFields) {
       const initialData: Record<string, string> = {};
@@ -62,30 +56,72 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
         initialData[field.name] = '';
       });
       setFormData(initialData);
-      setErrors({}); // Clear errors
+      setErrors({});
     }
   }, [event, isOpen, fetchedRegistrationFields]);
 
-  // handleChange function (remains the same, but simplified error handling)
+  // handleChange function
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Removed complex error state update for simplicity
     setErrors(prev => ({ ...prev, [name]: '' }));
   }, [setFormData, setErrors]);
 
-  // Simplified handleSubmit and validation (just for basic rendering)
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Form submitted locally with data:", formData);
-    // No backend call, no payment, no confirmation for now.
-    onClose(); // Just close the modal on submit for now.
-  }, [formData, onClose]);
+  // validateForm function
+  const validateForm = useCallback((): boolean => {
+    if (!event || !Array.isArray(fetchedRegistrationFields) || fetchedRegistrationFields.length === 0) return false;
 
+    const newErrors: Record<string, string> = {};
+    let isValid = true;
+
+    fetchedRegistrationFields.forEach(field => {
+      if (field.required && !formData[field.name]?.trim()) {
+        newErrors[field.name] = 'This field is required';
+        isValid = false;
+      }
+    });
+
+    setErrors(newErrors);
+    return isValid;
+  }, [event, fetchedRegistrationFields, formData, setErrors]);
+
+  // handleSubmit function
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      // Simple console log for error, no message prop
+      console.error("Please fill in all required fields.");
+      return;
+    }
+
+    setIsLoading(true); // Start loading
+
+    try {
+        // Hardcoded userId for simplicity, replace with actual user ID if available
+        //const userId = 1; // Example: assuming a default user ID or get from context/auth
+        
+        const response = await axios.post('http://localhost:5000/event/register-event', {
+            eventId: event?.id, // Pass event ID
+            //userId: userId,     // Pass user ID
+            formData: formData, // Pass the collected form data object directly
+        });
+
+        console.log("Registration API response:", response.data);
+        alert("Registration successful!"); // Simple success feedback
+        onClose(); // Close the modal on success
+
+    } catch (error) {
+        console.error("Error submitting registration to backend:", error);
+        alert("Registration failed. Please try again."); // Simple error feedback
+    } finally {
+        setIsLoading(false); // End loading
+    }
+  }, [event, formData, validateForm, onClose]); // Removed message/setMessageType from deps
 
   if (!isOpen) return null;
 
-  // Show loading state
+  // Show loading state for fields
   if (isFieldsLoading) {
     return (
       <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -103,7 +139,6 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
   }
 
   // Handle case where fields failed to load or no fields are defined
-  // This will also catch if fetchedRegistrationFields is null or empty array.
   if (!event || !Array.isArray(fetchedRegistrationFields) || fetchedRegistrationFields.length === 0) {
     console.log("No registration fields found for event or invalid format:", fetchedRegistrationFields);
     return (
@@ -142,7 +177,6 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* --- THIS IS WHERE INPUTS ARE MAPPED AND RENDERED --- */}
             {fetchedRegistrationFields.map((field) => (
               <div key={field.name} className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
@@ -170,7 +204,6 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 )}
-                {/* Simplified error message display */}
                 {errors[field.name] && (
                   <p className="text-sm text-red-500">{errors[field.name]}</p>
                 )}
@@ -180,16 +213,15 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
             <div className="pt-4">
               <button
                 type="submit"
+                disabled={isLoading}
                 className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                Confirm Registration
+                {isLoading ? 'Processing...' : 'Confirm Registration'}
               </button>
             </div>
           </form>
         </div>
       </div>
-
-      
     </div>
   );
 };
