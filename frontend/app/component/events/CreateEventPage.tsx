@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { XCircle } from 'lucide-react';
 import { Event, RegistrationField } from '../types'; // Import types
+import axios from 'axios';
 
 interface CreateEventPageProps {
   addEvent: (event: Event) => void;
@@ -41,7 +42,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
     setRegistrationFields(newFields);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async(e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
@@ -76,6 +77,24 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
       registrationFields: registrationFields,
       createdAt: new Date(),
     };
+
+    const response = await axios.post('http://localhost:5000/event/create', {
+      eventName: newEvent.name,
+      eventType: newEvent.type,
+      eventDate: newEvent.date,
+      eventTime: newEvent.time,
+      eventLocation: newEvent.location,
+      eventDescription: newEvent.description,
+      isPaid: newEvent.isPaid,
+      eventPrice: newEvent.price,
+      registrationFields: newEvent.registrationFields
+    },{
+      headers:{
+        "Content-Type": 'application/json',
+      }
+    })
+
+    console.log(response)
 
     addEvent(newEvent);
     setMessage("Event created successfully!", 'success');

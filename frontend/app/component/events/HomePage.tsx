@@ -34,7 +34,7 @@ const HomePage: React.FC<HomePageProps> = ({ events, onRegister, onShowDetails, 
         <h1 className="text-3xl font-bold text-black">Explore Events</h1>
         <button
           onClick={navigateToCreateEvent}
-          className="bg-gradient-to-r from-blue-300 to-purple-100 text-black font-semibold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+          className="bg-gradient-to-r from-blue-100 to-purple-100 text-black font-semibold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
         >
           <PlusCircle className="h-5 w-5" />
           Create New Event
