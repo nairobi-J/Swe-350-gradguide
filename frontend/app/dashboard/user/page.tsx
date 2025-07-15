@@ -77,11 +77,9 @@ const App = () => {
        if (priorExperience) {
         basePrompt += ` prior experiences ${priorExperience} `;
       }
-      if (shortSummary) {
-        basePrompt += ` prior experiences ${shortSummary} `;
-      }
+    
       if (cgpa) {
-        basePrompt += ` cgpa ${shortSummary} career advice.`;
+        basePrompt += ` cgpa ${cgpa} career advice.`;
       }
        if (shortSummary) {
         basePrompt += ` cgpa ${shortSummary} career advice.`;
