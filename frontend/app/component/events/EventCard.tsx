@@ -17,12 +17,12 @@ export default function EventCard({ event, onViewDetails }: EventCardProps) {
   return (
     <div className="flex flex-col bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300 h-full">
       <div className="p-6 flex-grow">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">{event.name}</h3>
+        <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-1">{event.name}</h3>
         <div className="flex items-center text-sm text-gray-600 mb-3">
           <CalendarDays className="w-4 h-4 mr-2" />
           <span>{event.date} at {event.time}</span>
         </div>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
           {event.description}
         </p>
         <div className="flex justify-between items-center text-xs font-medium mb-4">
