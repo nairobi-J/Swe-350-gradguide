@@ -1,14 +1,14 @@
 const pool = require('../db')
 
 const addQuestion =  async (req, res) => {
-    const { eventId, userId, questionText } = req.body;
+    const { eventId, userId, queryText } = req.body;
     
     try {
       const result = await pool.query(
         `INSERT INTO event_query (event_id, user_id, question_text)
          VALUES ($1, $2, $3)
          RETURNING *`,
-        [eventId, userId, questionText]
+        [eventId, userId, queryText]
       );
       
       res.status(201).json(result.rows[0]);
