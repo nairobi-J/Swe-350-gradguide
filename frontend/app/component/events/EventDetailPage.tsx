@@ -1,12 +1,13 @@
-// frontend/app/component/events/EventDetailPage.tsx
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 import React, { useState } from 'react';
-import { Info, DollarSign, MessageSquare, HelpCircle, Send, User } from 'lucide-react';
+import { Info, DollarSign, Calendar, MapPin, Clock, HelpCircle, Send, User, MessageSquare, Banknote } from 'lucide-react';
 import LoadingSpinner from '../shared/LoadingSpinner';
-import { Event, Feedback, Query, Answer } from '../types';
+import { Event, Feedback, Query, Answer, Registration } from '../types';
+import RegistrationModal from './RegistrationFormPage';
 
 interface EventDetailPageProps {
-  event: Event | null; // Can be null initially while loading
+  event: Event | null;
   onRegisterEvent: (eventId: string) => void;
   addFeedback: (eventId: string, userId: string, username: string, comment: string) => void;
   addQuery: (eventId: string, userId: string, username: string, queryText: string) => void;
@@ -18,7 +19,6 @@ interface EventDetailPageProps {
 
 const EventDetailPage: React.FC<EventDetailPageProps> = ({
   event,
-  onRegisterEvent,
   addFeedback,
   addQuery,
   addAnswerToQuery,
@@ -28,10 +28,24 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
 }) => {
   const [feedbackComment, setFeedbackComment] = useState('');
   const [queryText, setQueryText] = useState('');
-  const [answerText, setAnswerText] = useState<{ [key: string]: string }>({}); // State for answers to specific queries
+  const [answerText, setAnswerText] = useState<{ [key: string]: string }>({});
+  const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [messageType, setMessageType] = useState<'info' | 'success' | 'error'>('info');
+
+  const handleFinalizeRegistration = (registration: Registration) => {
+    console.log('Registration completed:', registration);
+    setMessage("Registration successful!");
+    setMessageType('success');
+    setIsRegistrationModalOpen(false);
+  };
 
   if (!event) {
-    return <LoadingSpinner />;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   const eventFeedbacks = feedbacks.filter(f => f.eventId === event.id);
@@ -58,152 +72,189 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
   };
 
   const handleSubmitAnswer = (queryId: string) => {
-    if (answerText[queryId] && answerText[queryId].trim()) {
-      addAnswerToQuery(queryId, currentUserId, "Event Host", answerText[queryId]); // Simulating a host reply
+    if (answerText[queryId]?.trim()) {
+      addAnswerToQuery(queryId, currentUserId, "Event Host", answerText[queryId]);
       setAnswerText(prev => ({ ...prev, [queryId]: '' }));
     }
   };
 
   return (
-    <div className="p-6 bg-gray-50 text-black min-h-screen">
-      <h1 className="text-4xl font-extrabold text-gray-900 mb-6">{event.name}</h1>
-      <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center"><Info className="h-6 w-6 mr-2" /> Event Information</h2>
-            <p className="text-gray-700 text-lg leading-relaxed mb-4">{event.description}</p>
-            <p className="text-gray-600 text-md mb-2"><strong className="text-gray-800">Date:</strong> {event.date}</p>
-            <p className="text-gray-600 text-md mb-2"><strong className="text-gray-800">Time:</strong> {event.time}</p>
-            <p className="text-gray-600 text-md mb-2">
-              <strong className="text-gray-800">Location:</strong>
-              {event.type === 'online' ? (
-                <span className="ml-1 text-red-600 font-semibold">Online (Link available after registration)</span>
-              ) : (
-                <span className="ml-1">{event.location}</span>
-              )}
-            </p>
-            <p className="text-gray-600 text-md mb-2">
-              <strong className="text-gray-800">Type:</strong> {event.type === 'online' ? 'Online Event' : 'Offline Event'}
-            </p>
-            <p className="text-gray-600 text-md mb-4">
-              <strong className="text-gray-800">Price:</strong> {event.isPaid ? <span className="text-green-600 font-semibold">${event.price.toFixed(2)}</span> : 'Free'}
-            </p>
-            <button
-              onClick={() => onRegisterEvent(event.id)}
-              className="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors duration-200 flex items-center justify-center gap-2"
-            >
-              <User className="h-5 w-5" /> Register Now
-            </button>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Event Header */}
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{event.name}</h1>
+        <div className="flex justify-center items-center space-x-4 text-gray-600">
+          <span className="flex items-center">
+            <Calendar className="h-4 w-4 mr-1" /> {event.date}
+          </span>
+          <span className="flex items-center">
+            <Clock className="h-4 w-4 mr-1" /> {event.time}
+          </span>
+          <span className="flex items-center">
+            <MapPin className="h-4 w-4 mr-1" /> 
+            {event.type === 'online' ? 'Online Event' : event.location}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column - Event Details */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Event Description */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Event Details</h2>
+            <p className="text-gray-700 leading-relaxed">{event.description}</p>
           </div>
 
-          <div>
-            {event.isPaid && (
-              <>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center"><DollarSign className="h-6 w-6 mr-2" /> Payment Information</h2>
-                <p className="text-gray-700 mb-4">
-                  This is a paid event. To register, you will need to pay the amount of <strong className="text-green-600">${event.price.toFixed(2)}</strong>.
-                  Click the "Register Now" button above to proceed with registration and payment.
-                </p>
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-8">
-                  <p className="text-blue-800 font-medium">Payment Gateway Simulation:</p>
-                  <p className="text-sm text-blue-700">Upon clicking register, you would typically be redirected to a secure payment portal (e.g., Stripe, PayPal).</p>
-                </div>
-              </>
-            )}
+          {/* Event Information Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h3 className="font-medium text-gray-800 mb-3 flex items-center">
+                <Info className="h-5 w-5 mr-2 text-blue-500" /> Event Type
+              </h3>
+              <p className="text-gray-700">
+                {event.type === 'online' ? (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                    Online
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800">
+                    In-Person
+                  </span>
+                )}
+              </p>
+            </div>
 
-            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center"><MessageSquare className="h-6 w-6 mr-2" /> Feedbacks</h2>
-            <form onSubmit={handleSendFeedback} className="space-y-3 mb-6">
-              <textarea
-                value={feedbackComment}
-                onChange={(e) => setFeedbackComment(e.target.value)}
-                placeholder="Share your thoughts about this event..."
-                rows={3}
-                className="w-full p-3 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-              ></textarea>
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200"
-              >
-                Submit Feedback
-              </button>
-            </form>
-            {eventFeedbacks.length > 0 ? (
-              <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
-                {eventFeedbacks.map((f) => (
-                  <div key={f.id} className="bg-gray-100 p-4 rounded-lg border border-gray-200">
-                    <p className="font-semibold text-gray-800">{f.username}</p>
-                    <p className="text-gray-700 mt-1">{f.comment}</p>
-                    <p className="text-xs text-gray-500 mt-2">{new Date(f.createdAt).toLocaleString()}</p>
-                  </div>
-                ))}
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h3 className="font-medium text-gray-800 mb-3 flex items-center">
+                <Banknote className="h-5 w-5 mr-2 text-green-500" /> Pricing
+              </h3>
+              <p className="text-gray-700">
+                {event.isPaid ? (
+                  <span className="text-2xl font-bold text-green-600">Taka:{event.price.toFixed(2)}</span>
+                ) : (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800">
+                    Free Admission
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Registration CTA */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-sm p-6 border border-gray-200">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+              <div className="mb-4 md:mb-0">
+                <h3 className="text-lg font-semibold text-gray-800">Ready to join us?</h3>
+                <p className="text-gray-600">Secure your spot now</p>
               </div>
-            ) : (
-              <p className="text-gray-500 italic">No feedbacks yet. Be the first to share your thoughts!</p>
-            )}
+              <button
+                onClick={() => setIsRegistrationModalOpen(true)}
+                className="bg-gradient-to-r from-blue-200 to-purple-200 hover:from-blue-300 hover:to-purple-300 text-black font-medium py-3 px-6 rounded-lg shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <User className="h-5 w-5" /> Register Now
+              </button>
+            </div>
+          </div>
+        </div>
 
-            <h2 className="text-2xl font-bold text-gray-800 mt-8 mb-4 flex items-center"><HelpCircle className="h-6 w-6 mr-2" /> Queries & Answers</h2>
-            <form onSubmit={handleSendQuery} className="space-y-3 mb-6">
-              <textarea
-                value={queryText}
-                onChange={(e) => setQueryText(e.target.value)}
-                placeholder="Have a question? Ask here..."
-                rows={3}
-                className="w-full p-3 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-              ></textarea>
+        {/* Right Column - Interaction Section */}
+        <div className="space-y-6">
+          {/* Q&A Section */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <HelpCircle className="h-5 w-5 mr-2 text-purple-500" /> Questions & Answers
+            </h2>
+            
+            <form onSubmit={handleSendQuery} className="mb-6">
+              <div className="mb-3">
+                <textarea
+                  value={queryText}
+                  onChange={(e) => setQueryText(e.target.value)}
+                  placeholder="Have a question about this event?"
+                  rows={3}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
               <button
                 type="submit"
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200"
+                className="w-full bg-purple-200 hover:bg-purple-300 text-black font-medium py-2 px-4 rounded-lg shadow transition-colors duration-200"
               >
-                Submit Query
+                Ask Question
               </button>
             </form>
+
             {eventQueries.length > 0 ? (
-              <div className="space-y-6 max-h-96 overflow-y-auto pr-2">
+              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                 {eventQueries.map((query) => (
-                  <div key={query.id} className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
-                    <p className="text-sm text-gray-500 mb-1">
-                      <span className="font-semibold">{query.username}</span> asked on {new Date(query.createdAt).toLocaleString()}
-                    </p>
-                    <p className="text-lg text-gray-800 font-medium mb-3">"{query.query}"</p>
-
-                    {query.answers.length > 0 && (
-                      <div className="space-y-3 mb-4">
-                        {query.answers.map(answer => (
-                          <div key={answer.id} className="bg-indigo-100 p-3 rounded-md">
-                            <p className="font-semibold text-indigo-800">{answer.username} (Answer):</p>
-                            <p className="text-indigo-700 mt-1">{answer.answer}</p>
-                            <p className="text-xs text-indigo-500 mt-1">{new Date(answer.createdAt).toLocaleString()}</p>
-                          </div>
-                        ))}
+                  <div key={query.id} className="border-b border-gray-200 pb-4 last:border-0">
+                    <div className="flex items-start mb-2">
+                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-800 font-medium">
+                        {query.username.charAt(0)}
                       </div>
-                    )}
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-900">{query.username}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(query.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-gray-800 ml-13 mb-3">{query.query}</p>
 
-                    {/* Host Reply Section */}
-                    <div className="mt-4 pt-4 border-t border-indigo-200">
-                      <h3 className="text-md font-semibold text-gray-700 mb-2">Reply:</h3>
+                    {query.answers.map((answer) => (
+                      <div key={answer.id} className="ml-13 pl-4 border-l-2 border-purple-200 mb-3">
+                        <div className="flex items-start">
+                          <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 text-xs font-medium">
+                            {answer.username.charAt(0)}
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm font-medium text-gray-900">{answer.username}</p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(answer.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-gray-700 mt-1">{answer.answer}</p>
+                      </div>
+                    ))}
+
+                    <div className="ml-13 mt-3">
                       <textarea
                         value={answerText[query.id] || ''}
                         onChange={(e) => handleAnswerChange(query.id, e.target.value)}
-                        placeholder="Type your answer here..."
+                        placeholder="Write your answer..."
                         rows={2}
-                        className="w-full p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                      ></textarea>
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                      />
                       <button
                         onClick={() => handleSubmitAnswer(query.id)}
-                        className="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+                        className="mt-2 text-sm bg-blue-200 hover:bg-blue-300 text-white py-1 px-3 rounded-lg transition-colors duration-200 flex items-center gap-1"
                       >
-                        <Send className="h-4 w-4" /> Submit Answer
+                        <Send className="h-3 w-3" /> Post Answer
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 italic">No queries yet. Ask a question about this event!</p>
+              <div className="text-center py-6">
+                <MessageSquare className="h-8 w-8 mx-auto text-gray-400" />
+                <p className="mt-2 text-gray-500">No questions yet. Be the first to ask!</p>
+              </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Registration Modal */}
+      <RegistrationModal
+        event={event}
+        isOpen={isRegistrationModalOpen}
+        onClose={() => setIsRegistrationModalOpen(false)}
+        onFinalizeRegistration={handleFinalizeRegistration}
+        setMessage={setMessage}
+        setMessageType={setMessageType}
+      />
     </div>
   );
 };

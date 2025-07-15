@@ -73,9 +73,108 @@ create table if not exists favorites(
 	 foreign key (program_id) references program(program_id) on delete cascade
 )
 
+create table if not exists event(
+
+     id serial primary key,
+	 user_id int references users(id),
+	 name varchar(500) not null,
+	 type varchar(30) not null check(type in('online', 'offline')),
+	 date date not null,
+	 time time not null,
+	 location text,
+	 description text,
+	 is_paid boolean not null default false,
+	 price numeric(10,2) default 0,
+	 created_at timestamp default now()
+	 
+)
+
+create table if not exists event_registration_form(
+        id serial primary key,
+		event_id int not null references event(id) on delete cascade,
+		name varchar(255) not null,
+		label varchar(255) not null,
+		type varchar(50) not null check (type in('text','email','number','textarea')),
+		required boolean not null default false,
+		created_at timestamp default now()
+)
+
+create table if not exists event_registration_response(
+    id serial primary key,
+	event_id int references event(id) on delete cascade,
+	user_id int references users(id) on delete set null,
+	created_at timestamp default now()
+)
+
+create table if not exists event_registration_response_data(
+    id serial primary key,
+	response_id int references event_registration_response(id) on delete cascade,
+	field_name varchar(255),
+	field_value text
+)
+
+CREATE TABLE if not exists event_feedback (
+  id SERIAL PRIMARY KEY,
+  event_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  comment TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE if not exists event_query (
+  id SERIAL PRIMARY KEY,
+  event_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  question_text TEXT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'answered', 'closed')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE if not exists event_query_reply (
+  id SERIAL PRIMARY KEY,
+  query_id INTEGER NOT NULL REFERENCES event_query(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL,
+  reply_text TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+
+
 -- Add index for faster searches
 CREATE INDEX idx_universities_country ON universities(country);
 CREATE INDEX idx_universities_name ON universities(name);
 
 COMMIT;
 
+
+--jerin
+CREATE TABLE university_programs (
+    "SCHOOL" TEXT,                   -- Changed to TEXT
+    "STATE" TEXT,                    -- Changed to TEXT
+    "CITY" TEXT,                     -- Changed to TEXT
+    "NOC" TEXT,                      -- Changed to TEXT
+    "PROGRAM" TEXT,
+    "TYPE" TEXT,                     -- Changed to TEXT
+    "DEPARTMENT" TEXT,               -- Changed to TEXT
+    "DELIVERY" TEXT,                 -- Changed to TEXT
+    "DURATION" TEXT,                 -- Changed to TEXT
+    "PREREQ" TEXT,
+    "LINK" TEXT,
+    "LOC_LAT" NUMERIC(10, 7),
+    "LOC_LONG" NUMERIC(10, 7),
+    "WORLD_RANK" TEXT,               -- Stays TEXT
+    "COUNTRY" TEXT,                  -- Changed to TEXT
+    "TEACHING" TEXT,                 -- Stays TEXT
+    "INTERNATIONAL" TEXT,            -- Stays TEXT
+    "RESEARCH" TEXT,                 -- Stays TEXT
+    "CITATIONS" TEXT,                -- Stays TEXT
+    "INCOME" TEXT,                   -- Stays TEXT
+    "TOTAL_SCORE" TEXT,              -- Stays TEXT
+    "NUM_STUDENTS" TEXT,             -- Stays TEXT
+    "STUDENT_STAFF_RATIO" TEXT,      -- Stays TEXT
+    "INTERNATIONAL_STUDENTS" TEXT,   -- Stays TEXT
+    "F_M_RATIO" TEXT,                -- Stays TEXT
+    "YEAR" TEXT,                     -- Stays TEXT
+    "timesData" TEXT
+);
