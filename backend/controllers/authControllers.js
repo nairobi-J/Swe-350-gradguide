@@ -52,10 +52,9 @@ const register = async (req, res) => {
 };
 
 
-
 const login = async (req, res) => {
     const { email, password } = req.body;
-    console.log(`Attempting login for email: ${email}`); // Improved logging
+    console.log(`Attempting login for email: ${email}`);
 
     // 1. Basic validation for required fields
     if (!email || !password) {
@@ -83,13 +82,17 @@ const login = async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials. Incorrect password.' });
         }
 
-       
-       
+        // 5. Generate JWT token
+        const token = jwt.sign(
+            { userId: user.id },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' } // Token expires in 24 hours
+        );
 
         // 6. Return a success response with the token and basic user info
         res.status(200).json({
             message: 'Login successful!',
-           
+            token: token,
             user: {
                 id: user.id,
                 first_name: user.first_name,
@@ -99,12 +102,11 @@ const login = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Login failed:', error); // Log the full error for server-side debugging
-
-        // 7. Handle any unexpected server errors
+        console.error('Login failed:', error);
         res.status(500).json({ message: 'Login failed due to a server error. Please try again later.' });
     }
 };
+
 
 // You would typically export this function to be used in your Express routes
 // module.exports = { login, register }; // If you have both in one file

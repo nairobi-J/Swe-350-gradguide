@@ -3,8 +3,9 @@ const express = require('express')
 const router = express.Router()
 
 const eventController = require('../controllers/eventController')
+const authenticate = require('../middleware/authMiddleware')
 
-router.post('/create',eventController.createEvent)
+router.post('/create',authenticate,eventController.createEvent)
 router.get('/all', eventController.getAllEvent)
 router.get('/byID', eventController.getEventByID)
 router.get('/registration',eventController.getEventRegistrationFields)
