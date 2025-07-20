@@ -78,6 +78,8 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
       createdAt: new Date(),
     };
 
+   const token =  localStorage.getItem('token'); 
+
     const response = await axios.post('http://localhost:5000/event/create', {
       eventName: newEvent.name,
       eventType: newEvent.type,
@@ -90,7 +92,8 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
       registrationFields: newEvent.registrationFields
     },{
       headers:{
-        "Content-Type": 'application/json',
+      Authorization: `Bearer ${token}`,
+      "Content-Type": 'application/json',
       }
     })
 
