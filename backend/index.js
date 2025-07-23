@@ -19,6 +19,7 @@ const eventRoutes = require('./routes/eventRoutes')
 const regFormRoutes = require('./routes/regFormRoutes')
 const eventFeedbackRoutes = require('./routes/eventFeedbackRoutes')
 const eventQueryRoutes = require('./routes/eventQueryRoutes')
+const reviewRoutes = require('./routes/reviewRoutes')
 
 app.use(express.json());
 // app.post('/users', async (req, res) => {
@@ -60,6 +61,7 @@ app.use('/event', eventRoutes)
 app.use('/regform',regFormRoutes)
 app.use('/eventFeedback', eventFeedbackRoutes)
 app.use('/eventQuery', eventQueryRoutes)
+app.use('/review', reviewRoutes)
 
 
 app.post('/auth', authRoutes)

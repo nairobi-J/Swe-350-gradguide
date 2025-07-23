@@ -2,6 +2,8 @@ const pool = require('../db');
 
 const fs = require('fs');
 
+const parse  = require('csv-parser');
+
 
 async function importCsvToPostgres(filePath) {
   let client;
@@ -76,4 +78,4 @@ async function importCsvToPostgres(filePath) {
 }
 
 
-importCsvToPostgres('.files/reviews.csv');
+importCsvToPostgres('./files/glassdoor_reviews.csv');
