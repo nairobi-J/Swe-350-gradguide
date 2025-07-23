@@ -1,3 +1,4 @@
 node_modules
 .env
 .env.local
+files/glassdoor_reviews.csv
