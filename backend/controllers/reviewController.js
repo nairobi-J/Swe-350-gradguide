@@ -20,20 +20,14 @@ const getAvgReview = async (req, res) => {
 
 const getReviewByFirm = async (req, res) => {
     const { firmName } = req.query;
+  const page = parseInt(req.query.page) || 1; // Default to page 1
+  const limit = parseInt(req.query.limit) || 10; // Default to 10 reviews per page
+  const offset = (page - 1) * limit;
 
   try {
-    // Sanitize firmName to prevent SQL injection (though pg.query handles basic injection with parameterized queries)
     const sanitizedFirmName = decodeURIComponent(firmName);
 
-    
-    const reviewsQuery = 'SELECT * FROM reviews WHERE firm = $1';
-    const { rows: reviews } = await pool.query(reviewsQuery, [sanitizedFirmName]);
-
-    if (reviews.length === 0) {
-      return res.status(404).json({ message: 'Company not found or no reviews.' });
-    }
-
-   
+    // Fetch aggregated statistics (still full for simplicity and small size)
     const statsQuery = `
       SELECT
         firm,
@@ -52,18 +46,40 @@ const getReviewByFirm = async (req, res) => {
         COUNT(CASE WHEN ceo_approv = 'v' THEN 1 END) AS ceo_approv_mixed,
         COUNT(CASE WHEN outlook = 'v' THEN 1 END) AS outlook_positive,
         COUNT(CASE WHEN outlook = 'r' THEN 1 END) AS outlook_neutral,
-        COUNT(CASE WHEN outlook = 'x' THEN 1 END) AS outlook_negative
+        COUNT(CASE WHEN outlook = 'x' THEN 1 END) AS outlook_negative,
+        COUNT(*) AS total_reviews_count -- Get total count for pagination info
       FROM reviews
       WHERE firm = $1
       GROUP BY firm;
     `;
     const { rows: statsRows } = await pool.query(statsQuery, [sanitizedFirmName]);
-    const statistics = statsRows[0]; // Should only be one row
+
+    if (statsRows.length === 0) {
+      return res.status(404).json({ message: 'Company not found or no reviews.' });
+    }
+    const statistics = statsRows[0];
+    const totalReviews = parseInt(statistics.total_reviews_count); // Ensure it's a number
+
+    // Fetch paginated reviews for the firm
+    const paginatedReviewsQuery = `
+      SELECT *
+      FROM reviews
+      WHERE firm = $1
+      ORDER BY date_review DESC, id DESC -- Order by date and then id for consistent pagination
+      LIMIT $2 OFFSET $3;
+    `;
+    const { rows: reviews } = await pool.query(paginatedReviewsQuery, [sanitizedFirmName, limit, offset]);
 
     res.json({
       firm: sanitizedFirmName,
       statistics: statistics,
-      reviews: reviews, // All individual reviews
+      reviews: reviews, // Only the reviews for the current page
+      pagination: {
+        currentPage: page,
+        limit: limit,
+        totalReviews: totalReviews,
+        totalPages: Math.ceil(totalReviews / limit),
+      },
     });
 
   } catch (err) {
