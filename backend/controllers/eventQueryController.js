@@ -1,7 +1,8 @@
 const pool = require('../db')
 
 const addQuestion =  async (req, res) => {
-    const { eventId, userId, queryText } = req.body;
+    const { eventId, queryText } = req.body;
+    const userId = req.user.id; 
     
     try {
       const result = await pool.query(
