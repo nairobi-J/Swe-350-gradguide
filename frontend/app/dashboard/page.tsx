@@ -114,6 +114,8 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
         throw new Error(data.message || 'Login failed');
       }
 
+      localStorage.setItem('token', data.token); 
+
       setMessage({
         text: data.message || 'Login successful!',
         type: 'success'
