@@ -141,13 +141,6 @@ CREATE TABLE if not exists event_query_reply (
 
 
 
--- Add index for faster searches
-CREATE INDEX idx_universities_country ON universities(country);
-CREATE INDEX idx_universities_name ON universities(name);
-
-COMMIT;
-
-
 --jerin
 CREATE TABLE university_programs (
     "SCHOOL" TEXT,                   -- Changed to TEXT
@@ -178,3 +171,35 @@ CREATE TABLE university_programs (
     "YEAR" TEXT,                     -- Stays TEXT
     "timesData" TEXT
 );
+
+
+CREATE TABLE if not exists reviews (
+    id SERIAL PRIMARY KEY,
+    firm VARCHAR(255) NOT NULL,
+    date_review DATE,
+    job_title VARCHAR(255),
+    current_status VARCHAR(255), -- Renamed from 'current' to avoid SQL keyword conflict
+    location VARCHAR(255),
+    overall_rating INTEGER,
+    work_life_balance NUMERIC(2,1),
+    culture_values NUMERIC(2,1),
+    diversity_inclusion NUMERIC(2,1),
+    career_opp NUMERIC(2,1),
+    comp_benefits NUMERIC(2,1),
+    senior_mgmt NUMERIC(2,1),
+    recommend CHAR(1), -- 'o', 'x', 'v'
+    ceo_approv CHAR(1), -- 'o', 'x', 'v'
+    outlook CHAR(1), -- 'o', 'x', 'v', 'r' (assuming 'r' is neutral for outlook)
+    headline TEXT,
+    pros TEXT,
+    cons TEXT
+);
+
+
+
+-- Add index for faster searches
+CREATE INDEX idx_universities_country ON universities(country);
+CREATE INDEX idx_universities_name ON universities(name);
+
+COMMIT;
+

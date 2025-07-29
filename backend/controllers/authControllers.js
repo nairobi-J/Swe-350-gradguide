@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken'); // Assuming you'll use this for login later, not strictly for register success
+const jwt = require('jsonwebtoken'); 
 const pool = require('../db'); // Your database connection pool
 
 const register = async (req, res) => {
@@ -52,10 +52,9 @@ const register = async (req, res) => {
 };
 
 
-
 const login = async (req, res) => {
     const { email, password } = req.body;
-    console.log(`Attempting login for email: ${email}`); // Improved logging
+    console.log(`Attempting login for email: ${email}`);
 
     // 1. Basic validation for required fields
     if (!email || !password) {
@@ -63,6 +62,7 @@ const login = async (req, res) => {
     }
 
     try {
+        
         // 2. Find the user by email in the database
         const result = await pool.query(
             `SELECT id, first_name, last_name, email, password FROM users WHERE email = $1`,
@@ -83,13 +83,17 @@ const login = async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials. Incorrect password.' });
         }
 
-       
+       const token = jwt.sign(
+            { userId: user.id }, // Payload containing user ID
+            process.env.JWT_SECRET, // Secret key from environment variables
+            { expiresIn: '1h' } // Token expiration time
+        );
        
 
         // 6. Return a success response with the token and basic user info
         res.status(200).json({
             message: 'Login successful!',
-           
+            token: token,
             user: {
                 id: user.id,
                 first_name: user.first_name,
@@ -99,9 +103,7 @@ const login = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Login failed:', error); // Log the full error for server-side debugging
-
-        // 7. Handle any unexpected server errors
+        console.error('Login failed:', error);
         res.status(500).json({ message: 'Login failed due to a server error. Please try again later.' });
     }
 };
