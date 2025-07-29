@@ -4,14 +4,12 @@ const createEvent = async(req, res) =>{
    console.log(req.body)
    
     const { eventName,eventType,eventDate,eventTime,eventLocation,eventDescription,isPaid,eventPrice,registrationFields} = req.body
-    const userId = req.user.id
-
-    console.log('User ID:', userId);
+    const userId = req.user.id; 
 
     try {
         const result = await pool.query(
             `
-            insert into event ( user_id, name, type, date, time, location, description, is_paid, price)
+            insert into event (user_id, name, type, date, time, location, description, is_paid, price)
             values($1, $2, $3, $4, $5, $6, $7, $8, $9)
             returning *`, [userId, eventName, eventType, eventDate, eventTime, eventLocation, eventDescription, isPaid, eventPrice]
         )

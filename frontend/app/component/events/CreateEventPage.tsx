@@ -92,9 +92,9 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
       registrationFields: newEvent.registrationFields
     },{
       headers:{
-      Authorization: `Bearer ${token}`,
-      "Content-Type": 'application/json',
-      }
+        Authorization: `Bearer ${token}`, 
+        "Content-Type": 'application/json',
+      },
     })
 
     console.log(response)

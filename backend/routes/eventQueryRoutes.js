@@ -3,8 +3,9 @@ const express = require('express')
 const router = express.Router()
 
 const eventQueryController = require('../controllers/eventQueryController')
+const authenticate = require('../middleware/authMiddleware')
 
-router.post('/query',eventQueryController.addQuestion)
+router.post('/query', authenticate, eventQueryController.addQuestion)
 router.post('/reply', eventQueryController.addReply)
 
 router.get('/query',eventQueryController.getEventQuestions)
