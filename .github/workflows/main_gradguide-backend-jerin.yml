@@ -47,8 +47,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-          # The artifact is downloaded to the current working directory, which is the root of the runner.
-          # So, the 'node-app' artifact (which contains 'backend/') will be at './backend/'
+          path: . # <--- ADD THIS LINE: Download artifact to current directory
+          # The artifact 'node-app' contains the 'backend/' folder.
+          # So, after this, your deployable content will be at ./backend/
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -63,4 +64,4 @@ jobs:
         with:
           app-name: 'gradguide-backend-jerin'
           slot-name: 'Production'
-          package: backend/
+          package: backend/ # <--- KEEP THIS LINE: The 'backend/' folder is now directly available
