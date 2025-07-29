@@ -47,14 +47,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-          path: . # <--- ADD THIS LINE: Download artifact to current directory
+          path: . # Download artifact to current directory
           # The artifact 'node-app' contains the 'backend/' folder.
           # So, after this, your deployable content will be at ./backend/
 
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_6DBF9CCEA22149A3B28A9088D692417E }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_6DBF9CCEA221449A3B28A9088D692417E }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F4A2FEDD96974EE6970CD1429733E067 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C97D3BD11E02483BA8DAEFE6A49CE0C8 }}
 
@@ -64,4 +64,4 @@ jobs:
         with:
           app-name: 'gradguide-backend-jerin'
           slot-name: 'Production'
-          package: backend/ # <--- KEEP THIS LINE: The 'backend/' folder is now directly available
+          package: . # <--- CHANGE THIS LINE: Deploy the contents of the current directory (which is 'backend/')
