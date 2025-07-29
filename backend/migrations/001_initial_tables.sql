@@ -173,7 +173,7 @@ CREATE TABLE university_programs (
 );
 
 
-CREATE TABLE reviews (
+CREATE TABLE if not exists reviews (
     id SERIAL PRIMARY KEY,
     firm VARCHAR(255) NOT NULL,
     date_review DATE,

@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken'); // Assuming you'll use this for login later, not strictly for register success
+const jwt = require('jsonwebtoken'); 
 const pool = require('../db'); // Your database connection pool
 
 const register = async (req, res) => {
@@ -62,6 +62,7 @@ const login = async (req, res) => {
     }
 
     try {
+        
         // 2. Find the user by email in the database
         const result = await pool.query(
             `SELECT id, first_name, last_name, email, password FROM users WHERE email = $1`,
@@ -82,12 +83,12 @@ const login = async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials. Incorrect password.' });
         }
 
-        // 5. Generate JWT token
-        const token = jwt.sign(
-            { userId: user.id },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' } // Token expires in 24 hours
+       const token = jwt.sign(
+            { userId: user.id }, // Payload containing user ID
+            process.env.JWT_SECRET, // Secret key from environment variables
+            { expiresIn: '1h' } // Token expiration time
         );
+       
 
         // 6. Return a success response with the token and basic user info
         res.status(200).json({
@@ -106,7 +107,6 @@ const login = async (req, res) => {
         res.status(500).json({ message: 'Login failed due to a server error. Please try again later.' });
     }
 };
-
 
 // You would typically export this function to be used in your Express routes
 // module.exports = { login, register }; // If you have both in one file

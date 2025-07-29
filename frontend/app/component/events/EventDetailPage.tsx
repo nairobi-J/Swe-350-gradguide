@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { Info, DollarSign, Calendar, MapPin, Clock, HelpCircle, Send, User, MessageSquare, Banknote } from 'lucide-react';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import axios from 'axios';
+import { comment } from 'postcss';
 import { Event, Feedback, Query, Answer, Registration } from '../types';
 import RegistrationModal from './RegistrationFormPage';
 
@@ -51,17 +53,35 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
   const eventFeedbacks = feedbacks.filter(f => f.eventId === event.id);
   const eventQueries = queries.filter(q => q.eventId === event.id);
 
-  const handleSendFeedback = (e: React.FormEvent) => {
+  const handleSendFeedback = async(e: React.FormEvent) => {
     e.preventDefault();
     if (feedbackComment.trim()) {
+      await axios.post('http://localhost:5000/eventFeedback/', {
+        eventId: 32,
+        userId: 1,
+        comment: feedbackComment
+      },{
+      headers:{
+        "Content-Type": 'application/json',
+      }
+    })
       addFeedback(event.id, currentUserId, `User ${currentUserId.split('-')[1]}`, feedbackComment);
       setFeedbackComment('');
     }
   };
 
-  const handleSendQuery = (e: React.FormEvent) => {
+  const handleSendQuery = async(e: React.FormEvent) => {
     e.preventDefault();
     if (queryText.trim()) {
+       await axios.post('http://localhost:5000/eventQuery/query', {
+        eventId: 32,
+        userId: 1,
+        queryText: queryText
+      },{
+      headers:{
+        "Content-Type": 'application/json',
+      }
+    })
       addQuery(event.id, currentUserId, `User ${currentUserId.split('-')[1]}`, queryText);
       setQueryText('');
     }
@@ -71,9 +91,18 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
     setAnswerText(prev => ({ ...prev, [queryId]: value }));
   };
 
-  const handleSubmitAnswer = (queryId: string) => {
-    if (answerText[queryId]?.trim()) {
-      addAnswerToQuery(queryId, currentUserId, "Event Host", answerText[queryId]);
+  const handleSubmitAnswer = async(queryId: string) => {
+    if (answerText[queryId] && answerText[queryId].trim()) {
+      await axios.post('http://localhost:5000/eventQuery/reply', {
+        queryId: 2,
+        userId: 1,
+        replyText: answerText[queryId]
+      },{
+      headers:{
+        "Content-Type": 'application/json',
+      }
+    })
+      addAnswerToQuery(queryId, currentUserId, "Event Host", answerText[queryId]); // Simulating a host reply
       setAnswerText(prev => ({ ...prev, [queryId]: '' }));
     }
   };
