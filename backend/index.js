@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors')
 require('dotenv').config()
 const pool = require('./db')
-
+const paymentRoutes = require('./routes/paymentRoutes');
 const app = express()
 
 const PORT = process.env.POOL || 5000
@@ -63,11 +63,13 @@ app.use('/regform',regFormRoutes)
 app.use('/eventFeedback', eventFeedbackRoutes)
 app.use('/eventQuery', eventQueryRoutes)
 app.use('/review', reviewRoutes)
-
+app.use('/api/payment', paymentRoutes);
 app.post('/auth', authRoutes)
 app.get('/uni', universityRoutes)
 app.get('/uni/programs', universityProgramsRoutes)
 
-app.listen(PORT, ()=>{
-     console.log(`Server running on http://localhost:${PORT}`);
-})
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running locally on http://localhost:${PORT}`);
+  });
+}

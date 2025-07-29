@@ -33,20 +33,20 @@ export default function EventPageClient() {
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<'success' | 'error' | 'info'>('info');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-
+const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
   // <--- MOVE DATA FETCHING HERE
   useEffect(() => {
-    axios.get('http://localhost:5000/event/all')
+    axios.get(`${AZURE_BACKEND_URL}/event/all`)
       .then(response => {
         // Assuming your backend returns an array of Event objects
         setEvents(response.data);
         setLoading(false);
-        setMessage('Events loaded successfully!', 'success'); // Optional: show success message
+        setMessage('Events loaded successfully!'); // Optional: show success message
       })
       .catch(error => {
         console.error('Fetch error:', error);
         setLoading(false);
-        setMessage('Failed to load events. Please try again later.', 'error'); // Optional: show error message
+        setMessage('Failed to load events. Please try again later.'); // Optional: show error message
         setMessageType('error');
       });
   }, []); // Empty dependency array means this runs once on mount
