@@ -49,7 +49,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
 
     const parsedPrice = parseFloat(eventPrice.toString()); // Ensure it's parsed correctly
     if (isPaid && (isNaN(parsedPrice) || parsedPrice <= 0)) {
-      setMessage("Please enter a valid price for paid events.", 'error');
+      setMessage("Please enter a valid price for paid events.");
       setMessageType('error');
       setLoading(false);
       return;
@@ -57,7 +57,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
 
     const invalidFields = registrationFields.some(field => !field.name || !field.label);
     if (invalidFields) {
-      setMessage("All custom field names and labels are required.", 'error');
+      setMessage("All custom field names and labels are required.");
       setMessageType('error');
       setLoading(false);
       return;
@@ -100,7 +100,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
     console.log(response)
 
     addEvent(newEvent);
-    setMessage("Event created successfully!", 'success');
+    setMessage("Event created successfully!");
     setMessageType('success');
 
     // Clear form
