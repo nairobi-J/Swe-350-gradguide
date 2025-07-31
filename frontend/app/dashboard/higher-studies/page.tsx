@@ -15,7 +15,8 @@ export default function HigherStudiesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
  const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
-
+// In your page.tsx file, at the top of your component or function
+//console.log('The backend URL is:', process.env.NEXT_PUBLIC_AZURE_BACKEND_URL);
   //effect to fetch programs initially
   useEffect(() => {
     const fetchUniversityPrograms = async () => {
@@ -23,7 +24,11 @@ export default function HigherStudiesPage() {
         const response = await fetch(`${AZURE_BACKEND_URL}/uni/programs/get?limit=20`);
          const count = await fetch(`${AZURE_BACKEND_URL}/uni/programs/count`);
          const programCount = await fetch(`${AZURE_BACKEND_URL}/uni/programs/programs`);
-        const countryCount = await fetch('http://localhost:5000/uni/programs/countries');
+        const countryCount = await fetch(`${AZURE_BACKEND_URL}/uni/programs/countries`);
+        //const response = await fetch(`https:localhost:5000/uni/programs/get?limit=20`);
+        //  const count = await fetch(`https:localhost:5000/uni/programs/count`);
+        //  const programCount = await fetch(`https:localhost:5000/uni/programs/programs`);
+        // const countryCount = await fetch(`https:localhost:5000/uni/programs/countries`);
          if (!count.ok) {
           throw new Error(`HTTP error! status: ${count.status} for count`);
         }

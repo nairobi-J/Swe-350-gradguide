@@ -24,7 +24,6 @@ const eventFeedbackRoutes = require('./routes/eventFeedbackRoutes');
 const eventQueryRoutes = require('./routes/eventQueryRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 
-app.use(express.json());
 
 // Use the routes for their specified paths
 app.use('/auth', authRoutes);
