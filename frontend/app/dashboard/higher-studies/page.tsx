@@ -22,7 +22,7 @@ export default function HigherStudiesPage() {
       try {
         const response = await fetch(`${AZURE_BACKEND_URL}/uni/programs/get?limit=20`);
          const count = await fetch(`${AZURE_BACKEND_URL}/uni/programs/count`);
-         const programCount = await fetch('http://localhost:5000/uni/programs/programs');
+         const programCount = await fetch(`${AZURE_BACKEND_URL}/uni/programs/programs`);
         const countryCount = await fetch('http://localhost:5000/uni/programs/countries');
          if (!count.ok) {
           throw new Error(`HTTP error! status: ${count.status} for count`);
