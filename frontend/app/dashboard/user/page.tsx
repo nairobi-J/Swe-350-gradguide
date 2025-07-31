@@ -36,7 +36,7 @@ const App = () => {
 
 
 
-   const [cgpa, setCgpga] = useState('3.54');
+   const [cgpa, setCgpga] = useState('0.00');
   const [editingCgpa, setEditingCgpa] = useState(false);
     
    //it should be fetched from his search , his starts interests and all
