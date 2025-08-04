@@ -35,14 +35,14 @@ function CompanyCard({ firm, avg_overall_rating }: CompanyOverview) {
     </Link>
   );
 }
-
+const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
 // Main page component (Server Component)
 export default async function CompaniesPage() {
   let companies: CompanyOverview[] = [];
   let error: string | null = null;
 
   try {
-    const res = await fetch('http://localhost:5000/review/avg-review', {
+    const res = await fetch(`${AZURE_BACKEND_URL}/review/avg-review`, {
       cache: 'no-store' // This ensures data is fetched on every request, equivalent to getServerSideProps
     });
 
