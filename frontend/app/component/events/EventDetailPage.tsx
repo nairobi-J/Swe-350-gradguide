@@ -7,7 +7,7 @@ import axios from 'axios';
 import { comment } from 'postcss';
 import { Event, Feedback, Query, Answer, Registration } from '../types';
 import RegistrationModal from './RegistrationFormPage';
-
+const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
 interface EventDetailPageProps {
   event: Event | null;
   onRegisterEvent: (eventId: string) => void;
@@ -56,7 +56,7 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
   const handleSendFeedback = async(e: React.FormEvent) => {
     e.preventDefault();
     if (feedbackComment.trim()) {
-      await axios.post('http://localhost:5000/eventFeedback/', {
+      await axios.post(`${AZURE_BACKEND_URL}/eventFeedback/`, {
         eventId: 32,
         userId: 1,
         comment: feedbackComment

@@ -4,7 +4,7 @@ require('dotenv').config();
 const pool = require('./db');
 const paymentRoutes = require('./routes/paymentRoutes');
 const app = express();
-
+app.use(express.json());
 // A potential typo: it should likely be process.env.PORT, not process.env.POOL
 // We will default to 5000 if the environment variable is not set.
 const PORT = process.env.PORT || 5000;
@@ -23,8 +23,24 @@ const regFormRoutes = require('./routes/regFormRoutes');
 const eventFeedbackRoutes = require('./routes/eventFeedbackRoutes');
 const eventQueryRoutes = require('./routes/eventQueryRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
-
-
+const guidelines = require('./routes/guidelines')
+// Add this temporary route ABOVE all other middleware
+// app.get('/route-test', (req, res) => {
+//   const routePath = app._router.stack
+//     .filter(layer => layer.name === 'router' && layer.regexp.test('/generate/response'))
+//     .map(layer => layer.path);
+    
+//   res.json({ 
+//     actualRoutePath: routePath.length ? routePath[0] : 'NOT FOUND',
+//     fullPath: '/generate/response',
+//     registeredRoutes: app._router.stack
+//       .filter(layer => layer.route)
+//       .map(layer => ({
+//         path: layer.route.path,
+//         method: Object.keys(layer.route.methods)[0]
+//       }))
+//   });
+// });
 // Use the routes for their specified paths
 app.use('/auth', authRoutes);
 app.use('/uni', universityRoutes);
@@ -38,6 +54,7 @@ app.use('/eventFeedback', eventFeedbackRoutes);
 app.use('/eventQuery', eventQueryRoutes);
 app.use('/review', reviewRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/generate', guidelines);
 
 // You had some duplicate app.use() statements that are not necessary.
 // For example, app.post('/auth', authRoutes) is redundant if you already have app.use('/auth', authRoutes)

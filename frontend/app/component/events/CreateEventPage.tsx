@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { XCircle } from 'lucide-react';
 import { Event, RegistrationField } from '../types'; // Import types
 import axios from 'axios';
-
+const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
 interface CreateEventPageProps {
   addEvent: (event: Event) => void;
   currentUserId: string;
@@ -80,7 +80,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
 
    const token =  localStorage.getItem('token'); 
 
-    const response = await axios.post('http://localhost:5000/event/create', {
+    const response = await axios.post(`${AZURE_BACKEND_URL}/event/create`, {
       eventName: newEvent.name,
       eventType: newEvent.type,
       eventDate: newEvent.date,

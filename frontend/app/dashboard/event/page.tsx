@@ -33,7 +33,7 @@ export default function EventPageClient() {
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<'success' | 'error' | 'info'>('info');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
+  const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
   // <--- MOVE DATA FETCHING HERE
   useEffect(() => {
     axios.get(`${AZURE_BACKEND_URL}/event/all`)

@@ -4,8 +4,7 @@ import remarkGfm from 'remark-gfm';
 import { useState } from "react";
 import { Edit2, Check, Sparkles, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
 
-// Main App component
-const App = () => {
+const CareerPathGenerator = () => {
   // State for user's primary interest/goal
   const [interest, setInterest] = useState('Machine Learning and AI, healthcare technology, and data science');
   const [editingInterest, setEditingInterest] = useState(false);
@@ -46,83 +45,35 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   // State to store any errors that occur
   const [error, setError] = useState('');
-
-  // Function to handle the API call
-  const generateGuidelines = async () => {
-    setIsLoading(true);
-    setError('');
-    setResponse('');
-
-    try {
-      // --- Dynamic Prompt Construction ---
-      let basePrompt = `Provide comprehensive career guidance for a professional interested in ${interest}.`;
-
-      if (university) {
-        basePrompt += ` They are currently studying at ${university}`;
-      }
-      if (degree) {
-        basePrompt += ` pursuing ${degree}.`;
-      }
-      if (careerLevel) {
-        basePrompt += ` They are at ${careerLevel} level`;
-      }
-      if (projects) {
-        basePrompt += ` and have completed projects including: ${projects}.`;
-      }
-      if (stacks) {
-        basePrompt += ` Their technical expertise includes: ${stacks}.`;
-      }
-      if (priorExperience) {
-        basePrompt += ` Previous experience: ${priorExperience}.`;
-      }
-      if (cgpa) {
-        basePrompt += ` Academic performance: ${cgpa} CGPA.`;
-      }
-      if (shortSummary) {
-        basePrompt += ` Current focus: ${shortSummary}.`;
-      }
-
-      const fullPrompt = `${basePrompt} Please provide ${outputFormat}. Include specific steps, timeline recommendations, skill development paths, and industry insights.`;
-
-      const apiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.NEXT_PUBLIC_DeepS}`,
-          "HTTP-Referer": window.location.origin,
-          "X-Title": "Career Guideline Generator",
-          "Content-Type": "application/json"
-        },
+  const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
+const generateGuidelines = async () => {
+  setIsLoading(true);
+  setError('');
+  
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_AZURE_BACKEND_URL}/generate/response`, 
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          "model": "deepseek/deepseek-chat-v3-0324:free",
-          "messages": [
-            {
-              "role": "user",
-              "content": fullPrompt
-            }
-          ]
+          interest,
+          university,
+          // ... other fields
         })
-      });
-
-      if (!apiResponse.ok) {
-        const errorData = await apiResponse.json();
-        throw new Error(`API Error: ${apiResponse.status} - ${errorData.message || 'Unknown error'}`);
       }
+    );
 
-      const data = await apiResponse.json();
-
-      if (data.choices && data.choices.length > 0 && data.choices[0].message && data.choices[0].message.content) {
-        setResponse(data.choices[0].message.content);
-      } else {
-        setError('No content found in the API response.');
-      }
-
-    } catch (err) {
-      setError(`Failed to generate guidelines: ${err.message}`);
-      console.error("Fetch error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Request failed');
+    
+    setResponse(data.data);
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Helper function to render an editable field
   const renderEditableField = (
@@ -390,4 +341,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default CareerPathGenerator;

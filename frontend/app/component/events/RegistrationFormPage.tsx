@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { Event, RegistrationField } from '../types'; // Only Event and RegistrationField needed
 import axios from 'axios';
-
+const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
 interface RegistrationModalProps {
   event: Event | null;
   isOpen: boolean;
@@ -28,7 +28,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
   useEffect(() => {
     if (event?.id && isOpen) {
       setIsFieldsLoading(true);
-      axios.get(`http://localhost:5000/event/registration?event_id=${event.id}`)
+      axios.get(`${AZURE_BACKEND_URL}/event/registration?event_id=${event.id}`)
         .then(response => {
           if (Array.isArray(response.data)) {
             setFetchedRegistrationFields(response.data);
@@ -101,7 +101,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
         // Hardcoded userId for simplicity, replace with actual user ID if available
         //const userId = 1; // Example: assuming a default user ID or get from context/auth
         
-        const response = await axios.post('http://localhost:5000/event/register-event', {
+        const response = await axios.post(`${AZURE_BACKEND_URL}/event/register-event`, {
             eventId: event?.id, // Pass event ID
             //userId: userId,     // Pass user ID
             formData: formData, // Pass the collected form data object directly
