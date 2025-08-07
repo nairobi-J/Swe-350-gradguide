@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
 export default function AuthPage() { // Renamed to AuthPage for broader scope
-  const [isSignIn, setIsSignIn] = useState(false); // State to toggle between Sign In and Sign Up
+  const [isSignIn, setIsSignIn] = useState(true); // State to toggle between Sign In and Sign Up
  
   const [formData, setFormData] = useState({
     firstName: '',
@@ -125,7 +125,7 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
        // Assuming you have a dashboard route set up
       // Redirect to dashboard or home page after successful login
 
-      router.push('/dashboard/home'); // Redirect to dashboard
+      router.push('/dashboard/user'); // Redirect to dashboard
       console.log('User logged in:', data.user);
     } catch (err) {
       setMessage({ text: err.message || 'An error occurred during login.', type: 'error' });

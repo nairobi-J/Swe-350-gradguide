@@ -73,7 +73,7 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
   const handleSendQuery = async(e: React.FormEvent) => {
     e.preventDefault();
     if (queryText.trim()) {
-       await axios.post('http://localhost:5000/eventQuery/query', {
+       await axios.post(`${AZURE_BACKEND_URL}/eventQuery/query`, {
         eventId: 32,
         userId: 1,
         queryText: queryText
@@ -93,7 +93,7 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
 
   const handleSubmitAnswer = async(queryId: string) => {
     if (answerText[queryId] && answerText[queryId].trim()) {
-      await axios.post('http://localhost:5000/eventQuery/reply', {
+      await axios.post(`${AZURE_BACKEND_URL}/eventQuery/reply`, {
         queryId: 2,
         userId: 1,
         replyText: answerText[queryId]
