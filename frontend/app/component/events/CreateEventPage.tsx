@@ -93,7 +93,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
     },{
       headers:{
         Authorization: `Bearer ${token}`, 
-        "Content-Type": 'application/json',
+        "Content-Type": "application/json",
       },
     })
 

@@ -125,7 +125,7 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
        // Assuming you have a dashboard route set up
       // Redirect to dashboard or home page after successful login
 
-      router.push('/dashboard/user'); // Redirect to dashboard
+      router.push('/dashboard/home'); // Redirect to dashboard
       console.log('User logged in:', data.user);
     } catch (err) {
       setMessage({ text: err.message || 'An error occurred during login.', type: 'error' });
