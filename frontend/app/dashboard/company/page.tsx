@@ -1,6 +1,6 @@
 // app/companies/page.tsx
 import Link from 'next/link';
-import { CompanyOverview } from '@/types'; // Adjust path if needed, or define directly
+import { CompanyOverview } from '@/types';
 
 // Helper component for star rendering
 function StarRatingDisplay({ rating }: { rating: number }) {
@@ -22,20 +22,37 @@ function StarRatingDisplay({ rating }: { rating: number }) {
   );
 }
 
+// Updated CompanyCard component with the new design for consistent height
 function CompanyCard({ firm, avg_overall_rating }: CompanyOverview) {
   return (
-    <Link href={`company/${firm}`} className="block">
-      <div className="bg-white shadow-lg rounded-lg p-6 m-4 w-full sm:w-80 hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-2">{firm}</h2>
-        <div className="flex items-center mb-4">
-          <StarRatingDisplay rating={avg_overall_rating} />
+    <div className="w-full sm:w-80">
+      <Link href={`company/${firm}`} className="block h-full">
+        <div className="flex flex-col bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300 h-full">
+          {/* Main content section */}
+          <div className="p-6 flex-grow">
+            {/* The line-clamp-2 class ensures the title doesn't overflow and cause card size changes */}
+            <h2 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2">{firm}</h2>
+            <div className="flex items-center text-sm text-gray-600">
+              <StarRatingDisplay rating={avg_overall_rating} />
+            </div>
+          </div>
+          
+          {/* Call to Action section */}
+          <div className="px-6 pb-6">
+            <div className="flex">
+              <div className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-center">
+                View Details
+              </div>
+            </div>
+          </div>
         </div>
-        <p className="text-blue-600 hover:underline">Click for details</p>
-      </div>
-    </Link>
+      </Link>
+    </div>
   );
 }
+
 const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
+
 // Main page component (Server Component)
 export default async function CompaniesPage() {
   let companies: CompanyOverview[] = [];
@@ -66,8 +83,6 @@ export default async function CompaniesPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
-      {/* Head component for metadata in App Router uses layout.tsx or generateMetadata */}
-      {/* For specific page title, you can add it here if `layout.tsx` doesn't handle it dynamically */}
       <h1 className="text-4xl font-extrabold text-gray-900 mb-8 text-center">Explore Companies</h1>
       
       <div className="flex flex-wrap justify-center gap-6">
