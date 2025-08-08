@@ -32,9 +32,15 @@ export default function EventCard({ event, onViewDetails }: EventCardProps) {
             {event.type === 'online' ? 'Online' : 'In-Person'}
           </span>
           <span className={`px-2 py-1 rounded-full ${
+<<<<<<< HEAD
             event.is_paid ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
           }`}>
             {event.is_paid ? `৳${event.price}` : 'Free'}
+=======
+            event.isPaid ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
+          }`}>
+            {event.isPaid ? `৳${event.price}` : 'Free'}
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
           </span>
         </div>
       </div>

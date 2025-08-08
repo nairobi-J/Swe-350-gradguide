@@ -10,7 +10,7 @@
 
 //     try {
 
-//         await client.query('BEGIN')
+//         await client.query('BkkkkEGIN')
 
 //         for(const uni of universities){
 //             await client.query(

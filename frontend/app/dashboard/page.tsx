@@ -3,8 +3,9 @@
 import { redirect, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
 export default function AuthPage() { // Renamed to AuthPage for broader scope
-  const [isSignIn, setIsSignIn] = useState(false); // State to toggle between Sign In and Sign Up
+  const [isSignIn, setIsSignIn] = useState(true); // State to toggle between Sign In and Sign Up
  
   const [formData, setFormData] = useState({
     firstName: '',
@@ -70,7 +71,7 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
         gender: formData.gender
       };
 
-      const res = await fetch('http://localhost:5000/auth/register', {
+      const res = await fetch(`${AZURE_BACKEND_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -104,7 +105,7 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
         password: loginData.password,
       };
 
-      const res = await fetch('http://localhost:5000/auth/login', { // Assuming a login endpoint
+      const res = await fetch(`${AZURE_BACKEND_URL}/auth/login`, { // Assuming a login endpoint
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

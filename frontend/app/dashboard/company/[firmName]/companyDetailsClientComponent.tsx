@@ -1,9 +1,33 @@
+<<<<<<< HEAD
 // app/companies/[firmName]/CompanyDetailsClientComponent.tsx
 "use client"; // This makes it a Client Component
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { CompanyDetailData, Review, CompanyStatistics, Pagination } from '@/types'; 
+=======
+// To resolve the "Module not found: Can't resolve 'recharts'" error,
+// please run the following command in your terminal to install the library:
+// npm install recharts
+
+"use client";
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { CompanyDetailData, Review, CompanyStatistics, Pagination } from '@/types';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from 'recharts';
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
 
 // Helper component for star rendering (for ratings within a review)
 function StarRating({ rating }: { rating: number | null }) {
@@ -27,12 +51,82 @@ function StarRating({ rating }: { rating: number | null }) {
     );
 }
 
+<<<<<<< HEAD
 function StatItem({ label, value }: { label: string; value: number | string | null }) {
     const displayValue = value === null ? 'N/A' : (typeof value === 'number' ? `${value.toFixed(1)}/5` : value);
     return (
         <p className="text-gray-700 text-lg mb-1">
             <strong className="font-semibold">{label}:</strong> {displayValue}
         </p>
+=======
+// Chart component for average ratings
+function AverageRatingsChart({ statistics }: { statistics: CompanyStatistics }) {
+  const data = [
+    { name: 'Work-Life Balance', rating: statistics.avg_work_life_balance },
+    { name: 'Culture & Values', rating: statistics.avg_culture_values },
+    { name: 'Career Opportunities', rating: statistics.avg_career_opp },
+    { name: 'Compensation & Benefits', rating: statistics.avg_comp_benefits },
+    { name: 'Senior Management', rating: statistics.avg_senior_mgmt },
+    { name: 'Diversity & Inclusion', rating: statistics.avg_diversity_inclusion },
+  ];
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <BarChart
+        data={data}
+        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+        layout="vertical"
+      >
+        <XAxis type="number" domain={[0, 5]} hide />
+        <YAxis type="category" dataKey="name" stroke="#6b7280" width={150} />
+        <Tooltip cursor={{ fill: 'transparent' }} formatter={(value: number) => [`${value}/5`, 'Rating']} />
+        <Bar dataKey="rating" fill="#8884d8" />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// Chart component for categorical data (e.g., CEO approval)
+function ApprovalPieChart({ yes, no, mixed }: { yes: number; no: number; mixed: number }) {
+    const data = [
+        { name: 'Approves', value: yes, color: '#22c55e' },
+        { name: 'Does Not Approve', value: no, color: '#ef4444' },
+        { name: 'Mixed Approval', value: mixed, color: '#f59e0b' },
+    ];
+    return (
+        <ResponsiveContainer width="100%" height={200}>
+            <PieChart margin={{ top: 0, bottom: 0 }}>
+                <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label>
+                    {data.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+            </PieChart>
+        </ResponsiveContainer>
+    );
+}
+
+// Chart component for outlook data
+function OutlookPieChart({ positive, neutral, negative }: { positive: number; neutral: number; negative: number }) {
+    const data = [
+        { name: 'Positive', value: positive, color: '#22c55e' },
+        { name: 'Negative', value: negative, color: '#ef4444' },
+        { name: 'Neutral', value: neutral, color: '#f59e0b' },
+    ];
+    return (
+        <ResponsiveContainer width="100%" height={200}>
+            <PieChart margin={{ top: 0, bottom: 0 }}>
+                <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label>
+                    {data.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+            </PieChart>
+        </ResponsiveContainer>
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
     );
 }
 
@@ -112,7 +206,11 @@ function ReviewCard({ review }: { review: Review }) {
         </div>
     );
 }
+<<<<<<< HEAD
 
+=======
+const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
 interface CompanyDetailsClientComponentProps {
     initialData: CompanyDetailData | null;
     initialError: string | null;
@@ -126,7 +224,10 @@ export function CompanyDetailsClientComponent({ initialData, initialError, firmN
     const [hasMoreReviews, setHasMoreReviews] = useState<boolean>(true);
     const [currentError, setCurrentError] = useState<string | null>(initialError);
 
+<<<<<<< HEAD
     // Initialize hasMoreReviews based on initial data
+=======
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
     useEffect(() => {
         if (initialData?.pagination) {
             setHasMoreReviews(initialData.pagination.currentPage < initialData.pagination.totalPages);
@@ -149,7 +250,11 @@ export function CompanyDetailsClientComponent({ initialData, initialError, firmN
     if (!companyDetails) {
         return <div className="min-h-screen flex items-center justify-center text-lg text-gray-700">Loading company details...</div>;
     }
+<<<<<<< HEAD
 
+=======
+   
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
     const { statistics, reviews, pagination } = companyDetails;
 
     const loadMoreReviews = async () => {
@@ -158,15 +263,25 @@ export function CompanyDetailsClientComponent({ initialData, initialError, firmN
         setLoadingMore(true);
         const nextPage = currentPage + 1;
         try {
+<<<<<<< HEAD
             const res = await fetch(`http://localhost:5000/review/review-by-firm/?firmName=${firmName}&page=${nextPage}&limit=${pagination.limit}`);
+=======
+            const res = await fetch(`${AZURE_BACKEND_URL}/review/review-by-firm/?firmName=${firmName}&page=${nextPage}&limit=${pagination.limit}`);
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
             if (!res.ok) {
                 throw new Error(`Error loading more reviews: ${res.status} ${res.statusText}`);
             }
             const newReviewsData: CompanyDetailData = await res.json();
             setCompanyDetails(prevDetails => ({
+<<<<<<< HEAD
                 ...prevDetails!, // Use non-null assertion as we've checked for companyDetails
                 reviews: [...prevDetails!.reviews, ...newReviewsData.reviews], // Append new reviews
                 pagination: newReviewsData.pagination, // Update pagination info
+=======
+                ...prevDetails!,
+                reviews: [...prevDetails!.reviews, ...newReviewsData.reviews],
+                pagination: newReviewsData.pagination,
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
             }));
             setCurrentPage(nextPage);
             setHasMoreReviews(newReviewsData.pagination.currentPage < newReviewsData.pagination.totalPages);
@@ -193,12 +308,19 @@ export function CompanyDetailsClientComponent({ initialData, initialError, firmN
 
     return (
         <div className="min-h-screen bg-gray-100 p-8 lg:p-12">
+<<<<<<< HEAD
             {/* Metadata for this page */}
             <title>{statistics.firm} Reviews - Graduate Guide</title>
             <meta name="description" content={`Detailed reviews and statistics for ${statistics.firm}.`} />
             
 
             <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
+=======
+            <title>{statistics.firm} Reviews - Graduate Guide</title>
+            <meta name="description" content={`Detailed reviews and statistics for ${statistics.firm}.`} />
+
+            <div className="max-w-6xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
                 <div className="p-8 pb-4 border-b border-gray-200">
                     <h1 className="text-4xl font-extrabold text-gray-900 mb-2">{statistics.firm}</h1>
                     <div className="flex items-center mb-4">
@@ -206,6 +328,7 @@ export function CompanyDetailsClientComponent({ initialData, initialError, firmN
                     </div>
                 </div>
 
+<<<<<<< HEAD
                 <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 border-b border-gray-200">
                     <h2 className="col-span-full text-2xl font-bold text-gray-800 mb-4">Company Statistics</h2>
                     <StatItem label="Work-Life Balance" value={statistics.avg_work_life_balance} />
@@ -226,6 +349,47 @@ export function CompanyDetailsClientComponent({ initialData, initialError, firmN
                             <strong className="font-semibold">Business Outlook:</strong> {outlookPositive} Positive, {outlookNeutral} Neutral, {outlookNegative} Negative
                         </p>
                         <p className="text-gray-700 text-lg font-semibold mt-4">Total Reviews: {totalReviewsCount}</p>
+=======
+                <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-y-8 gap-x-12 border-b border-gray-200">
+                    <div className="col-span-full">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Company Statistics</h2>
+                    </div>
+
+                    {/* Left Column: Bar chart for average ratings */}
+                    <div className="flex flex-col">
+                        <h3 className="text-xl font-semibold text-gray-800 mb-4">Average Ratings</h3>
+                        <div className="h-80">
+                            <AverageRatingsChart statistics={statistics} />
+                        </div>
+                    </div>
+
+                    {/* Right Column: Pie charts for categorical stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="flex flex-col">
+                            <h3 className="text-xl font-semibold text-gray-800 mb-4 text-center">CEO Approval</h3>
+                            <div className="h-56">
+                                <ApprovalPieChart
+                                    yes={ceoApprovYes}
+                                    no={ceoApprovNo}
+                                    mixed={ceoApprovMixed}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col">
+                            <h3 className="text-xl font-semibold text-gray-800 mb-4 text-center">Business Outlook</h3>
+                            <div className="h-56">
+                                <OutlookPieChart
+                                    positive={outlookPositive}
+                                    neutral={outlookNeutral}
+                                    negative={outlookNegative}
+                                />
+                            </div>
+                        </div>
+                        <div className="col-span-full text-center mt-4">
+                            <p className="text-gray-700 text-lg font-semibold">Total Reviews: {totalReviewsCount}</p>
+                        </div>
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
                     </div>
                 </div>
 
@@ -262,4 +426,8 @@ export function CompanyDetailsClientComponent({ initialData, initialError, firmN
             </div>
         </div>
     );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19

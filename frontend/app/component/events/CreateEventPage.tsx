@@ -4,7 +4,11 @@ import React, { useState } from 'react';
 import { XCircle } from 'lucide-react';
 import { Event, RegistrationField } from '../types'; // Import types
 import axios from 'axios';
+<<<<<<< HEAD
 
+=======
+const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
 interface CreateEventPageProps {
   addEvent: (event: Event) => void;
   currentUserId: string;
@@ -49,7 +53,11 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
 
     const parsedPrice = parseFloat(eventPrice.toString()); // Ensure it's parsed correctly
     if (isPaid && (isNaN(parsedPrice) || parsedPrice <= 0)) {
+<<<<<<< HEAD
       setMessage("Please enter a valid price for paid events.", 'error');
+=======
+      setMessage("Please enter a valid price for paid events.");
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
       setMessageType('error');
       setLoading(false);
       return;
@@ -57,7 +65,11 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
 
     const invalidFields = registrationFields.some(field => !field.name || !field.label);
     if (invalidFields) {
+<<<<<<< HEAD
       setMessage("All custom field names and labels are required.", 'error');
+=======
+      setMessage("All custom field names and labels are required.");
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
       setMessageType('error');
       setLoading(false);
       return;
@@ -80,7 +92,11 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
 
    const token =  localStorage.getItem('token'); 
 
+<<<<<<< HEAD
     const response = await axios.post('http://localhost:5000/event/create', {
+=======
+    const response = await axios.post(`${AZURE_BACKEND_URL}/event/create`, {
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
       eventName: newEvent.name,
       eventType: newEvent.type,
       eventDate: newEvent.date,
@@ -92,15 +108,25 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
       registrationFields: newEvent.registrationFields
     },{
       headers:{
+<<<<<<< HEAD
       Authorization: `Bearer ${token}`,
       "Content-Type": 'application/json',
       }
+=======
+        Authorization: `Bearer ${token}`, 
+        "Content-Type": "application/json",
+      },
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
     })
 
     console.log(response)
 
     addEvent(newEvent);
+<<<<<<< HEAD
     setMessage("Event created successfully!", 'success');
+=======
+    setMessage("Event created successfully!");
+>>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
     setMessageType('success');
 
     // Clear form

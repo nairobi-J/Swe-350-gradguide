@@ -14,8 +14,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: '/dashboard/ai-coach', label: 'AI Coach', icon: Bot },
     { href: '/dashboard/higher-studies', label: 'Study Abroad', icon: BookOpen },
     { href: '/dashboard/event', label: 'Events', icon: Calendar},
-    // { href: '/dashboard/job-search', label: 'Search Job', icon: Briefcase },
-    { href: '/dashboard/paths', label: 'Career Path', icon: TrendingUp },
+     //{ href: '/dashboard/company', label: 'Job', icon: Briefcase },
+    { href: '/dashboard/company', label: 'Career Path', icon: TrendingUp },
      {href : '/dashboard/user', label:'User', icon:User},
     
   ];

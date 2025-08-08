@@ -14,16 +14,21 @@ export default function HigherStudiesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-
+ const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
+// In your page.tsx file, at the top of your component or function
+//console.log('The backend URL is:', process.env.NEXT_PUBLIC_AZURE_BACKEND_URL);
   //effect to fetch programs initially
   useEffect(() => {
     const fetchUniversityPrograms = async () => {
       try {
-        const response = await fetch('http://localhost:5000/uni/programs/get?limit=20');
-         const count = await fetch('http://localhost:5000/uni/programs/count');
-         const programCount = await fetch('http://localhost:5000/uni/programs/programs');
-        const countryCount = await fetch('http://localhost:5000/uni/programs/countries');
+        const response = await fetch(`${AZURE_BACKEND_URL}/uni/programs/get?limit=20`);
+         const count = await fetch(`${AZURE_BACKEND_URL}/uni/programs/count`);
+         const programCount = await fetch(`${AZURE_BACKEND_URL}/uni/programs/programs`);
+        const countryCount = await fetch(`${AZURE_BACKEND_URL}/uni/programs/countries`);
+        //const response = await fetch(`https:localhost:5000/uni/programs/get?limit=20`);
+        //  const count = await fetch(`https:localhost:5000/uni/programs/count`);
+        //  const programCount = await fetch(`https:localhost:5000/uni/programs/programs`);
+        // const countryCount = await fetch(`https:localhost:5000/uni/programs/countries`);
          if (!count.ok) {
           throw new Error(`HTTP error! status: ${count.status} for count`);
         }
@@ -153,10 +158,16 @@ const formatLivingCostIndex = (value) => {
   return `${value} (Global Avg = 100)`;
 };
 
-  if (loading) {
+ if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-800">
-        <p>Loading Universities...</p>
+      <div className="flex justify-center items-center min-h-screen text-gray-700">
+        <div className="flex flex-col items-center">
+          <svg className="animate-spin h-10 w-10 text-blue-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Loading Universities...
+        </div>
       </div>
     );
   }
