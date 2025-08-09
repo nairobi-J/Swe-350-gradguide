@@ -10,7 +10,7 @@ function PaymentStatusContent() {
   const tran_id = searchParams.get('tran_id');
 
   useEffect(() => {
-    const timer = setTimeout(() => router.push('/'), 3000);
+    const timer = setTimeout(() => router.push('/dashboard/home'), 3000);
     return () => clearTimeout(timer);
   }, [router]);
 
