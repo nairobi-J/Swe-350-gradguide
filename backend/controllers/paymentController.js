@@ -33,9 +33,9 @@ const initPayment = async (req, res) => {
       total_amount: event.rows[0].price,
       currency: 'BDT',
       tran_id: tran_id,
-      success_url: `${process.env.BACKEND_URL}/api/payment/success`,
-      fail_url: `${process.env.BACKEND_URL}/api/payment/fail`,
-      cancel_url: `${process.env.BACKEND_URL}/api/payment/cancel`,
+      success_url: `${process.env.BACKEND_URL}/payment/success`,
+      fail_url: `${process.env.BACKEND_URL}/payment/fail`,
+      cancel_url: `${process.env.BACKEND_URL}/payment/cancel`,
       cus_name: 'Customer Name', // Can fetch from users table if needed
       cus_email: 'customer@example.com',
       cus_phone: '01700000000',
@@ -55,7 +55,7 @@ const initPayment = async (req, res) => {
 
     // 5. Record minimal transaction data
     await pool.query(
-      `INSERT INTO payments (
+      `INSERT INTO event_transactions (
         transaction_id, user_id, event_id, amount, status
       ) VALUES ($1, $2, $3, $4, $5)`,
       [tran_id, userId, eventId, event.rows[0].price, 'PENDING']
@@ -73,37 +73,4 @@ const initPayment = async (req, res) => {
     });
   }
 };
-const handleSuccess = async (req, res) => {
-  const { tran_id } = req.query; // GET requests use req.query
-
-  try {
-    // 1. Validate with SSLCommerz
-    const validation = await sslcz.validate({ tran_id });
-    
-    // 2. Update transaction status
-    await pool.query(
-      `UPDATE payments SET 
-       status = 'COMPLETED',
-       gateway_data = $1
-       WHERE transaction_id = $2`,
-      [validation, tran_id]
-    );
-
-    // 3. Get transaction details
-    const payment = await pool.query(
-      `SELECT user_id, event_id FROM payments 
-       WHERE transaction_id = $1`,
-      [tran_id]
-    );
-
-    // 4. Complete registration (if needed)
-    // await completeRegistration(payment.rows[0].user_id, payment.rows[0].event_id);
-
-    // 5. Redirect to frontend
-    res.redirect(`https://gradguide.vercel.app/dashboard/event`);
-  } catch (error) {
-    console.error('Payment validation failed:', error);
-    res.redirect(`https://gradguide.vercel.app/payment-error?reason=validation_failed`);
-  }
-};
-module.exports = { initPayment, handleSuccess };
+module.exports = { initPayment };
