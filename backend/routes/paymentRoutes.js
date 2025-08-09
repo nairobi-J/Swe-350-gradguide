@@ -6,6 +6,8 @@ const paymentController = require('../controllers/paymentController');
 router.post('/init', paymentController.initPayment);
 
 // After (correct)
-//router.get('/api/payment/success', paymentController.handleSuccess);
+router.post('/success', paymentController.success);
+router.post('/fail', paymentController.fail);
+
 
 module.exports = router;

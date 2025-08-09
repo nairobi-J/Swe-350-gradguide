@@ -34,8 +34,8 @@ const initPayment = async (req, res) => {
             total_amount: eventDetails.price,
             currency: 'BDT',
             tran_id: tran_id,
-            success_url: `${process.env.AZURE_BACKEND_URL}/payment/success`,
-            fail_url: `${process.env.AZURE_BACKEND_URL}/payment/fail`,
+            success_url: `${process.env.AZURE_BACKEND_URL}/api/payment/success`,
+            fail_url: `${process.env.AZURE_BACKEND_URL}/api/payment/fail`,
             cancel_url: `${process.env.AZURE_BACKEND_URL}/payment/cancel`,
             cus_name: 'Test Customer',
             cus_email: 'customer@example.com',
@@ -91,4 +91,46 @@ const initPayment = async (req, res) => {
     }
 };
 
-module.exports = { initPayment };
+const success = async (req, res) => {
+  try {
+    console.log("Payment success callback data:", req.body);
+    
+    // Minimal working version - just log and respond
+    await pool.query(
+      `INSERT INTO payments (
+        transaction_id, status, created_at
+      ) VALUES ($1, $2, NOW())`,
+      [req.body.tran_id, 'success']
+    );
+    
+    // Redirect to frontend with success status
+    res.redirect(`${process.env.FRONTEND_URL}/payment/status?status=success&tran_id=${req.body.tran_id}`);
+    
+  } catch (error) {
+    console.error('Payment success error:', error);
+    res.redirect(`${process.env.FRONTEND_URL}/payment/status?status=error`);
+  }
+};
+
+const fail = async (req, res) => {
+  try {
+    console.log("Payment fail callback received:", req.body);
+    
+    const { tran_id } = req.body;
+    
+    await pool.query(
+      `UPDATE payments SET 
+       status = 'failed',
+       failed_at = NOW()
+       WHERE transaction_id = $1`,
+      [tran_id]
+    );
+    
+    res.status(200).json({ status: 'failed' });
+    
+  } catch (error) {
+    console.error('Payment fail error:', error);
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+};
+module.exports = { initPayment, success, fail  };

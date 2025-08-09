@@ -89,54 +89,40 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
 const handleSubmit = useCallback(async (e: React.FormEvent) => {
   e.preventDefault();
 
-  if (!validateForm() || !event) {
-    console.error("Validation failed");
-    return;
-  }
+  if (!validateForm() || !event) return;
 
   setIsLoading(true);
 
   try {
-    // For both paid and free events, first register the user
-    const registrationResponse = await axios.post(
-      `${AZURE_BACKEND_URL}/event/register-event`,
-      {
-        eventId: event.id,
-        formData,
-        isPaidEvent: event.is_paid // Let backend know if this is a paid event
-      }
-    );
-
     if (event.is_paid) {
-      // For paid events - get payment URL
+      // Updated URL with /api prefix
       const paymentResponse = await axios.post(
-        `${AZURE_BACKEND_URL}/payment/init`,
+        `${AZURE_BACKEND_URL}/api/payment/init`, // Added /api
         {
           eventId: event.id,
-          userId: registrationResponse.data.userId, // Use the registered user ID
-          registrationId: registrationResponse.data.registrationId // Pass registration ID
+          userId: 1 // TODO: Replace with actual user ID from auth
         }
       );
 
-      if (paymentResponse.data?.GatewayPageURL) {
-        // Use window.location.replace() to prevent going back
-        window.location.replace(paymentResponse.data.GatewayPageURL);
+      if (paymentResponse.data?.paymentUrl) {
+        // Recommended redirect method
+        window.location.href = paymentResponse.data.paymentUrl;
       } else {
-        throw new Error('Payment gateway URL not received');
+        throw new Error('No payment URL received');
       }
     } else {
-      // For free events
-      alert("Registration successful!");
+      // Free event registration
+      await axios.post(`${AZURE_BACKEND_URL}/api/event/register`, {
+        eventId: event.id,
+        formData
+      });
       onClose();
     }
   } catch (error) {
-    console.error("Operation failed:", {
-      error: error.response?.data || error.message
-    });
-    
+    console.error("Payment error:", error.response?.data || error.message);
     alert(
-      error.response?.data?.error || 
-      `Failed to ${event?.is_paid ? 'initiate payment' : 'register'}. Please try again.`
+      error.response?.data?.message || 
+      'Payment initiation failed. Please try again.'
     );
   } finally {
     setIsLoading(false);
