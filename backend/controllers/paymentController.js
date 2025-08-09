@@ -9,98 +9,101 @@ if (!process.env.STORE_ID || !process.env.STORE_PASSWORD) {
 }
 const AZURE_BACKEND_URL = process.env.AZURE_BACKEND_URL;
 const initPayment = async (req, res) => {
+  try {
     const { eventId, userId } = req.body;
 
-    try {
-        // Step 1: Fetch event details
-        const eventResult = await pool.query(
-            `SELECT name, price FROM event WHERE id = $1`, 
-            [eventId]
-        );
-        
-        if (eventResult.rows.length === 0) {
-            return res.status(404).json({ message: 'Event not found.' });
-        }
-        const { name: eventTitle, price: eventFee } = eventResult.rows[0];
-
-        // Step 2: Fetch user details - FIXED COLUMN NAME
-        const userResult = await pool.query(
-            `SELECT first_name, email, phone FROM users WHERE id = $1`, 
-            [userId]
-        );
-        
-        if (userResult.rows.length === 0) {
-            return res.status(404).json({ message: 'User not found.' });
-        }
-        // Fixed destructuring to match first_name
-        const { first_name: userName, email: userEmail, phone: userPhone } = userResult.rows[0];
-       
-        // Step 3: Generate transaction ID
-        const tran_id = `event_reg_${userId}_${eventId}_${Date.now()}`;
-
-        // Step 4: Prepare SSLCommerz data - ENHANCED WITH VALIDATION
-        const data = {
-            total_amount: eventFee,
-            currency: 'BDT',
-            tran_id: tran_id,
-            success_url: `${AZURE_BACKEND_URL}/api/payment/success`,
-            fail_url: `${AZURE_BACKEND_URL}/api/payment/fail`,
-            cancel_url: `${AZURE_BACKEND_URL}/api/payment/cancel`,
-            ipn_url: `${AZURE_BACKEND_URL}/api/payment/ipn`,
-            shipping_method: 'NO',
-            product_name: eventTitle.substring(0, 50), // Truncate if too long
-            product_category: 'Event Registration',
-            product_profile: 'general',
-            cus_name: userName || 'Customer', // Fallback if undefined
-            cus_email: userEmail,
-            cus_add1: 'N/A', 
-            cus_city: 'N/A',
-            cus_country: 'Bangladesh',
-            cus_phone: userPhone || '01700000000' // Fallback if undefined
-        };
-
-        // DEBUG: Log the payload being sent
-        console.log('SSLCommerz Request Payload:', data);
-
-        // Step 5: Initiate payment
-        const sslcz = new SSLCommerzPayment(
-            process.env.STORE_ID, 
-            process.env.STORE_PASSWORD, 
-            false // false for sandbox, true for production
-        );
-        
-        const apiResponse = await sslcz.init(data);
-        
-        // DEBUG: Log full API response
-        console.log('SSLCommerz API Response:', apiResponse);
-
-        // Step 6: Save pending transaction
-        await pool.query(
-            `INSERT INTO event_transactions (
-                transaction_id, user_id, event_id, 
-                amount, status
-            ) VALUES ($1, $2, $3, $4, $5)`,
-            [tran_id, userId, eventId, eventFee, 'PENDING']
-        );
-
-        if (!apiResponse.GatewayPageURL) {
-            throw new Error(`No GatewayPageURL. Response: ${JSON.stringify(apiResponse)}`);
-        }
-
-        return res.status(200).json({ 
-            success: true,
-            paymentUrl: apiResponse.GatewayPageURL 
-        });
-
-    } catch (error) {
-        console.error('Payment initiation error:', error);
-        res.status(500).json({ 
-            success: false,
-            message: 'Failed to initiate payment.',
-            error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        });
+    // 1. Verify event exists and is paid
+    const event = await pool.query(
+      `SELECT name, price FROM event 
+       WHERE id = $1 AND is_paid = true`,
+      [eventId]
+    );
+    
+    if (event.rows.length === 0) {
+      return res.status(400).json({ 
+        error: 'Event not found or not payable' 
+      });
     }
-};
 
-module.exports = { initPayment };
+    // 2. Generate transaction ID
+    const tran_id = `event_${eventId}_user_${userId}_${Date.now()}`;
+
+    // 3. Prepare minimal SSLCommerz payload
+    const paymentData = {
+      total_amount: event.rows[0].price,
+      currency: 'BDT',
+      tran_id: tran_id,
+      success_url: `${process.env.BACKEND_URL}/api/payment/success`,
+      fail_url: `${process.env.BACKEND_URL}/api/payment/fail`,
+      cancel_url: `${process.env.BACKEND_URL}/api/payment/cancel`,
+      cus_name: 'Customer Name', // Can fetch from users table if needed
+      cus_email: 'customer@example.com',
+      cus_phone: '01700000000',
+      shipping_method: 'NO',
+      product_name: event.rows[0].name.substring(0, 50),
+      product_category: 'Event'
+    };
+
+    // 4. Initiate payment
+    const sslcz = new SSLCommerzPayment(
+      process.env.STORE_ID,
+      process.env.STORE_PASSWORD,
+      false // sandbox mode
+    );
+    
+    const apiResponse = await sslcz.init(paymentData);
+
+    // 5. Record minimal transaction data
+    await pool.query(
+      `INSERT INTO payments (
+        transaction_id, user_id, event_id, amount, status
+      ) VALUES ($1, $2, $3, $4, $5)`,
+      [tran_id, userId, eventId, event.rows[0].price, 'PENDING']
+    );
+
+    res.json({ 
+      success: true,
+      paymentUrl: apiResponse.GatewayPageURL 
+    });
+  } catch (error) {
+    console.error("Payment error:", error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
+  }
+};
+const handleSuccess = async (req, res) => {
+  const { tran_id } = req.query; // GET requests use req.query
+
+  try {
+    // 1. Validate with SSLCommerz
+    const validation = await sslcz.validate({ tran_id });
+    
+    // 2. Update transaction status
+    await pool.query(
+      `UPDATE payments SET 
+       status = 'COMPLETED',
+       gateway_data = $1
+       WHERE transaction_id = $2`,
+      [validation, tran_id]
+    );
+
+    // 3. Get transaction details
+    const payment = await pool.query(
+      `SELECT user_id, event_id FROM payments 
+       WHERE transaction_id = $1`,
+      [tran_id]
+    );
+
+    // 4. Complete registration (if needed)
+    // await completeRegistration(payment.rows[0].user_id, payment.rows[0].event_id);
+
+    // 5. Redirect to frontend
+    res.redirect(`http:localhost:3000/payment-success?transaction=${tran_id}`);
+  } catch (error) {
+    console.error('Payment validation failed:', error);
+    res.redirect(`http:localhost:3000/payment-error?reason=validation_failed`);
+  }
+};
+module.exports = { initPayment, handleSuccess };

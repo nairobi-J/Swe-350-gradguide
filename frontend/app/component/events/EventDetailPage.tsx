@@ -159,7 +159,7 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
                 <Banknote className="h-5 w-5 mr-2 text-green-500" /> Pricing
               </h3>
               <p className="text-gray-700">
-                {event.isPaid ? (
+                {event.is_paid ? (
                   <span className="text-2xl font-bold text-green-600">Taka:{event.price.toFixed(2)}</span>
                 ) : (
                   <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800">
