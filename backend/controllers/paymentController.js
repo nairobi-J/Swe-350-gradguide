@@ -2,15 +2,17 @@ const SSLCommerzPayment = require('sslcommerz-lts');
 const pool = require('../db');
 
 const initPayment = async (req, res) => {
-    // Log your credentials and URL to ensure they are loaded correctly
     console.log("STORE_ID:", process.env.STORE_ID);
     console.log("STORE_PASSWORD:", process.env.STORE_PASSWORD ? "Loaded" : "Not Loaded");
     console.log("AZURE_BACKEND_URL:", process.env.AZURE_BACKEND_URL);
 
-    // ... (rest of your existing code)
-
     try {
         const { eventId, userId } = req.body;
+        
+        // Input validation
+        if (!eventId || !userId) {
+            return res.status(400).json({ success: false, error: 'Missing eventId or userId' });
+        }
 
         console.log("Received client data:", { eventId, userId });
 
@@ -19,7 +21,6 @@ const initPayment = async (req, res) => {
             [eventId]
         );
 
-        // Check if the event was found in the database
         console.log("Database query result:", event.rows);
 
         if (event.rows.length === 0) {
@@ -42,10 +43,16 @@ const initPayment = async (req, res) => {
             cus_add1: 'Dhaka',
             cus_city: 'Dhaka',
             cus_country: 'Bangladesh',
+            cus_postcode: '1000',
             shipping_method: 'NO',
-            product_name: eventDetails.name.substring(0, 50),
+            product_name: eventDetails.name.length > 50 
+                ? `${eventDetails.name.substring(0, 47)}...` 
+                : eventDetails.name,
             product_category: 'Event',
-            product_profile: 'general'
+            product_profile: 'general',
+            multi_card_name: '',
+            allowed_bin: '',
+            emi_option: 0
         };
 
         console.log("Final payload for SSLCommerz:", paymentData);
@@ -57,22 +64,31 @@ const initPayment = async (req, res) => {
         );
         
         const apiResponse = await sslcz.init(paymentData);
-        
-        // This is the most important log: it shows the full response from SSLCommerz
         console.log("Full SSLCommerz API response:", apiResponse);
 
-        if (apiResponse && apiResponse.status === 'SUCCESS' && apiResponse.GatewayPageURL) {
-            // ... (Your success logic)
+        if (apiResponse?.status === 'SUCCESS' && apiResponse.GatewayPageURL) {
+            return res.status(200).json({ 
+                success: true, 
+                paymentUrl: apiResponse.GatewayPageURL,
+                sessionKey: apiResponse.sessionkey 
+            });
         } else {
-            console.error("SSLCommerz API failed with reason:", apiResponse.failedreason);
-            throw new Error(apiResponse.failedreason || 'Failed to get a payment URL');
+            const errorReason = apiResponse?.failedreason || 'No Gateway URL received';
+            console.error("SSLCommerz API failed:", errorReason);
+            return res.status(400).json({ 
+                success: false, 
+                error: errorReason,
+                fullResponse: apiResponse 
+            });
         }
 
     } catch (error) {
-        console.error("Payment initiation error in catch block:", error.message);
-        res.status(500).json({ success: false, error: error.message || 'Payment initiation failed' });
+        console.error("Payment initiation error:", error.message);
+        return res.status(500).json({ 
+            success: false, 
+            error: error.message || 'Payment initiation failed' 
+        });
     }
 };
 
 module.exports = { initPayment };
-
