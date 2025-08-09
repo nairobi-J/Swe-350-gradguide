@@ -1,19 +1,42 @@
 'use client';
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
+import { CheckCircle2, XCircle, ArrowRight, Loader2 } from 'lucide-react';
 
 function PaymentStatusContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const status = searchParams.get('status');
   const tran_id = searchParams.get('tran_id');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => router.push('/dashboard/home'), 3000);
-    return () => clearTimeout(timer);
-  }, [router]);
+    // Validate the status parameter
+    if (!status || !['success', 'failed', 'error'].includes(status)) {
+      console.error('Invalid payment status:', status);
+      router.push('/dashboard/home');
+      return;
+    }
 
+    setLoading(false);
+    
+    const timer = setTimeout(() => {
+      router.push('/dashboard/home');
+    }, 10000); // Increased timeout to 10 seconds
+
+    return () => clearTimeout(timer);
+  }, [router, status]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-md text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Verifying payment status...</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       {/* Header Section */}

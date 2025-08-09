@@ -95,17 +95,37 @@ const success = async (req, res) => {
   try {
     console.log("Payment success callback data:", req.body);
     
-    await pool.query(
-      `INSERT INTO event_transactions (transaction_id, status) VALUES ($1, 'success')`,
-      [req.body.tran_id]
-    );
+    if (!req.body.tran_id) {
+      console.error('Missing transaction ID in success callback');
+      return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=error&reason=missing_tran_id`);
+    }
+
+    // Verify payment with SSLCommerz validation API if needed
     
-    // Use absolute URL to your frontend
-    res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=success&tran_id=${req.body.tran_id}`);
+    const result = await pool.query(
+      `INSERT INTO event_transactions 
+       (transaction_id, status, amount, event_id, user_id) 
+       VALUES ($1, 'success', $2, $3, $4)`,
+      [
+        req.body.tran_id,
+        req.body.amount,
+        req.body.value_a, // Assuming you pass eventId as value_a
+        req.body.value_b  // Assuming you pass userId as value_b
+      ]
+    );
+
+    console.log('Database insert result:', result.rowCount);
+    
+    if (result.rowCount === 1) {
+      return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=success&tran_id=${req.body.tran_id}`);
+    } else {
+      console.error('Database insert failed');
+      return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=error&reason=db_failed`);
+    }
     
   } catch (error) {
     console.error('Payment success error:', error);
-    res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=error`);
+    return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=error&reason=exception`);
   }
 };
 
