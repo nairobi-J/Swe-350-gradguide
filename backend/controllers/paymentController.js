@@ -100,10 +100,10 @@ const handleSuccess = async (req, res) => {
     // await completeRegistration(payment.rows[0].user_id, payment.rows[0].event_id);
 
     // 5. Redirect to frontend
-    res.redirect(`http:localhost:3000/payment-success?transaction=${tran_id}`);
+    res.redirect(`https://gradguide.vercel.app/dashboard/event`);
   } catch (error) {
     console.error('Payment validation failed:', error);
-    res.redirect(`http:localhost:3000/payment-error?reason=validation_failed`);
+    res.redirect(`https://gradguide.vercel.app/payment-error?reason=validation_failed`);
   }
 };
 module.exports = { initPayment, handleSuccess };
