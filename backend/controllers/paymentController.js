@@ -95,15 +95,12 @@ const success = async (req, res) => {
   try {
     console.log("Payment success callback data:", req.body);
     
-    // Minimal working version - just log and respond
     await pool.query(
-      `INSERT INTO payments (
-        transaction_id, status, created_at
-      ) VALUES ($1, $2, NOW())`,
-      [req.body.tran_id, 'success']
+      `INSERT INTO event_transactions (transaction_id, status) VALUES ($1, 'success')`,
+      [req.body.tran_id]
     );
     
-    // Redirect to frontend with success status
+    // Use absolute URL to your frontend
     res.redirect(`${process.env.FRONTEND_URL}/payment/status?status=success&tran_id=${req.body.tran_id}`);
     
   } catch (error) {
@@ -114,23 +111,15 @@ const success = async (req, res) => {
 
 const fail = async (req, res) => {
   try {
-    console.log("Payment fail callback received:", req.body);
-    
-    const { tran_id } = req.body;
-    
     await pool.query(
-      `UPDATE payments SET 
-       status = 'failed',
-       failed_at = NOW()
-       WHERE transaction_id = $1`,
-      [tran_id]
+      `INSERT INTO event_transactions (transaction_id, status) VALUES ($1, 'failed')`,
+      [req.body.tran_id]
     );
-    
-    res.status(200).json({ status: 'failed' });
-    
+    res.redirect(`${process.env.FRONTEND_URL}/payment/status?status=failed`);
   } catch (error) {
-    console.error('Payment fail error:', error);
-    res.status(500).json({ status: 'error', message: error.message });
+    res.redirect(`${process.env.FRONTEND_URL}/payment/status?status=error`);
   }
 };
+
+
 module.exports = { initPayment, success, fail  };
