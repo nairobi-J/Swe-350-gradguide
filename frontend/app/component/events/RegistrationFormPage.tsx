@@ -86,7 +86,6 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
   }, [event, fetchedRegistrationFields, formData, setErrors]);
 
   // handleSubmit function
- // Updated handleSubmit function in RegistrationFormPage.tsx
 const handleSubmit = useCallback(async (e: React.FormEvent) => {
   e.preventDefault();
 
