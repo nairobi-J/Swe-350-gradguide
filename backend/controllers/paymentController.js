@@ -101,11 +101,11 @@ const success = async (req, res) => {
     );
     
     // Use absolute URL to your frontend
-    res.redirect(`${process.env.FRONTEND_URL}/payment/status?status=success&tran_id=${req.body.tran_id}`);
+    res.redirect(`${process.env.FRONTEND_URL}/payment?status=success&tran_id=${req.body.tran_id}`);
     
   } catch (error) {
     console.error('Payment success error:', error);
-    res.redirect(`${process.env.FRONTEND_URL}/payment/status?status=error`);
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=error`);
   }
 };
 
@@ -115,9 +115,9 @@ const fail = async (req, res) => {
       `INSERT INTO event_transactions (transaction_id, status) VALUES ($1, 'failed')`,
       [req.body.tran_id]
     );
-    res.redirect(`${process.env.FRONTEND_URL}/payment/status?status=failed`);
+    res.redirect(`${process.env.FRONTEND_URL}/payment?status=failed`);
   } catch (error) {
-    res.redirect(`${process.env.FRONTEND_URL}/payment/status?status=error`);
+    res.redirect(`${process.env.FRONTEND_URL}/payment?status=error`);
   }
 };
 
