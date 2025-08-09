@@ -1,13 +1,11 @@
 'use client';
-import { Suspense } from 'react';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
 
-// Wrap the component that uses useSearchParams
 function PaymentStatusContent() {
   const router = useRouter();
-  const searchParams = new URLSearchParams(window.location.search);
+  const searchParams = useSearchParams();
   const status = searchParams.get('status');
   const tran_id = searchParams.get('tran_id');
 
