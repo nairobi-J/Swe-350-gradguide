@@ -203,3 +203,22 @@ CREATE INDEX idx_universities_name ON universities(name);
 
 COMMIT;
 
+CREATE TABLE event_transactions (
+    id SERIAL PRIMARY KEY,
+    transaction_id VARCHAR(50) UNIQUE NOT NULL,
+    user_id INTEGER NOT NULL,
+    event_id INTEGER NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    payment_date TIMESTAMP,
+    bank_transaction_id VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- We'll also create an index to speed up lookups by transaction ID.
+CREATE INDEX idx_transaction_id ON event_transactions (transaction_id);
+
+-- Optional: Add foreign key constraints to link to your other tables
+-- ALTER TABLE event_transactions ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id);
+-- ALTER TABLE event_transactions ADD CONSTRAINT fk_event FOREIGN KEY (event_id) REFERENCES event(id);

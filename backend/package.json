@@ -21,6 +21,7 @@
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
+    "sslcommerz-lts": "^1.1.0",
     "sslcommerz-nodejs": "^1.0.0"
   }
 }

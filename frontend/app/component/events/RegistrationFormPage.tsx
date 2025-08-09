@@ -1,30 +1,32 @@
-// frontend/app/component/events/RegistrationFormPage.tsx
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
-import { Event, RegistrationField } from '../types'; // Only Event and RegistrationField needed
 import axios from 'axios';
+
 const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
+
 interface RegistrationModalProps {
-  event: Event | null;
+  event: {
+    id: number;
+    name: string;
+    isPaid: boolean;
+  } | null;
   isOpen: boolean;
   onClose: () => void;
-  // Removed: onFinalizeRegistration, setMessage, setMessageType
 }
 
 const RegistrationModal: React.FC<RegistrationModalProps> = ({
   event,
   isOpen,
   onClose,
-  // Removed: onFinalizeRegistration, setMessage, setMessageType from destructuring
 }) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isFieldsLoading, setIsFieldsLoading] = useState(true);
-  const [fetchedRegistrationFields, setFetchedRegistrationFields] = useState<RegistrationField[] | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // For submit button loading state
+  const [fetchedRegistrationFields, setFetchedRegistrationFields] = useState<any[] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // useEffect to fetch registration fields
+  // Fetch registration fields
   useEffect(() => {
     if (event?.id && isOpen) {
       setIsFieldsLoading(true);
@@ -33,13 +35,13 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
           if (Array.isArray(response.data)) {
             setFetchedRegistrationFields(response.data);
           } else {
-            console.error("Backend returned non-array for registration fields:", response.data);
+            console.error("Invalid registration fields format");
             setFetchedRegistrationFields([]);
           }
           setIsFieldsLoading(false);
         })
         .catch(error => {
-          console.error("Error fetching registration fields:", error);
+          console.error("Error:", error);
           setIsFieldsLoading(false);
         });
     } else if (!isOpen) {
@@ -48,7 +50,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
     }
   }, [event?.id, isOpen]);
 
-  // useEffect for initial form data
+  // Initialize form data
   useEffect(() => {
     if (event && isOpen && fetchedRegistrationFields) {
       const initialData: Record<string, string> = {};
@@ -60,16 +62,14 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
     }
   }, [event, isOpen, fetchedRegistrationFields]);
 
-  // handleChange function
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setErrors(prev => ({ ...prev, [name]: '' }));
-  }, [setFormData, setErrors]);
+  }, []);
 
-  // validateForm function
   const validateForm = useCallback((): boolean => {
-    if (!event || !Array.isArray(fetchedRegistrationFields) || fetchedRegistrationFields.length === 0) return false;
+    if (!event || !Array.isArray(fetchedRegistrationFields)) return false;
 
     const newErrors: Record<string, string> = {};
     let isValid = true;
@@ -83,45 +83,61 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
     setErrors(newErrors);
     return isValid;
-  }, [event, fetchedRegistrationFields, formData, setErrors]);
+  }, [event, fetchedRegistrationFields, formData]);
 
-  // handleSubmit function
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      // Simple console log for error, no message prop
+    if (!validateForm() || !event) {
       console.error("Please fill in all required fields.");
       return;
     }
 
-    setIsLoading(true); // Start loading
+    setIsLoading(true);
 
     try {
-        // Hardcoded userId for simplicity, replace with actual user ID if available
-        //const userId = 1; // Example: assuming a default user ID or get from context/auth
-        
-        const response = await axios.post(`${AZURE_BACKEND_URL}/event/register-event`, {
-            eventId: event?.id, // Pass event ID
-            //userId: userId,     // Pass user ID
-            formData: formData, // Pass the collected form data object directly
-        });
+      if (event.isPaid) {
+        // Payment required - initiate SSLCommerz flow
+        const paymentResponse = await axios.post(
+          `${AZURE_BACKEND_URL}/api/payment/init`,
+          {
+            eventId: event.id,
+            formData: formData
+          }
+        );
 
-        console.log("Registration API response:", response.data);
-        alert("Registration successful!"); // Simple success feedback
-        onClose(); // Close the modal on success
-
+        if (paymentResponse.data.paymentUrl) {
+          // Save form data temporarily
+          sessionStorage.setItem(
+            `pending_registration_${event.id}`,
+            JSON.stringify(formData)
+          );
+          window.location.href = paymentResponse.data.paymentUrl;
+        } else {
+          throw new Error('Payment initiation failed');
+        }
+      } else {
+        // Free event - register directly
+        const response = await axios.post(
+          `${AZURE_BACKEND_URL}/event/register-event`,
+          {
+            eventId: event.id,
+            formData: formData
+          }
+        );
+        alert("Registration successful!");
+        onClose();
+      }
     } catch (error) {
-        console.error("Error submitting registration to backend:", error);
-        alert("Registration failed. Please try again."); // Simple error feedback
+      console.error("Error:", error);
+      alert(error.response?.data?.message || "Registration failed");
     } finally {
-        setIsLoading(false); // End loading
+      setIsLoading(false);
     }
-  }, [event, formData, validateForm, onClose]); // Removed message/setMessageType from deps
+  }, [event, formData, validateForm, onClose]);
 
   if (!isOpen) return null;
 
-  // Show loading state for fields
   if (isFieldsLoading) {
     return (
       <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -138,15 +154,13 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
     );
   }
 
-  // Handle case where fields failed to load or no fields are defined
   if (!event || !Array.isArray(fetchedRegistrationFields) || fetchedRegistrationFields.length === 0) {
-    console.log("No registration fields found for event or invalid format:", fetchedRegistrationFields);
     return (
       <div className="fixed inset-0 z-50 overflow-y-auto">
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-xl text-red-700 flex flex-col items-center">
             <X className="h-8 w-8 mb-3" />
-            <p>No custom registration fields defined for this event, or data is invalid.</p>
+            <p>No registration fields available for this event</p>
             <button onClick={onClose} className="mt-4 px-4 py-2 bg-gray-200 rounded-lg">Close</button>
           </div>
         </div>
@@ -216,7 +230,8 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 disabled={isLoading}
                 className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                {isLoading ? 'Processing...' : 'Confirm Registration'}
+                {isLoading ? 'Processing...' : 
+                 (event.isPaid ? 'Proceed to Payment' : 'Confirm Registration')}
               </button>
             </div>
           </form>

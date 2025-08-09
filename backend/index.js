@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const pool = require('./db');
-const paymentRoutes = require('./routes/paymentRoutes');
+
 const app = express();
 app.use(express.json());
 // A potential typo: it should likely be process.env.PORT, not process.env.POOL
@@ -23,7 +23,8 @@ const regFormRoutes = require('./routes/regFormRoutes');
 const eventFeedbackRoutes = require('./routes/eventFeedbackRoutes');
 const eventQueryRoutes = require('./routes/eventQueryRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
-const guidelines = require('./routes/guidelines')
+const guidelines = require('./routes/guidelines');
+const paymentRoutes = require('./routes/paymentRoutes');
 // Add this temporary route ABOVE all other middleware
 // app.get('/route-test', (req, res) => {
 //   const routePath = app._router.stack
@@ -55,6 +56,7 @@ app.use('/eventQuery', eventQueryRoutes);
 app.use('/review', reviewRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/generate', guidelines);
+
 
 // You had some duplicate app.use() statements that are not necessary.
 // For example, app.post('/auth', authRoutes) is redundant if you already have app.use('/auth', authRoutes)
