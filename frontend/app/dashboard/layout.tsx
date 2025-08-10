@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import '../globals.css';
-import { GraduationCap, Home, Bot, BookOpen, Briefcase, TrendingUp, Menu, X, Calendar, User } from 'lucide-react';
+import { GraduationCap, Home, Bot, BookOpen, Briefcase, TrendingUp, Menu, X, Calendar, User, LogInIcon, LogOutIcon } from 'lucide-react';
 import { useState } from 'react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const navItems = [
    
@@ -17,7 +18,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // { href: '/dashboard/job-search', label: 'Search Job', icon: Briefcase },
     { href: '/dashboard/paths', label: 'Career Path', icon: TrendingUp },
      {href : '/dashboard/user', label:'User', icon:User},
-    
+     {href : '/dashboard', label:'Login', icon:LogInIcon},
+     {href : '/dashboard/home', label:'Logout', icon:LogOutIcon}
+
   ];
 
   return (
@@ -43,6 +46,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <nav className="hidden md:flex items-center space-x-4">
               {navItems.map((item) => {
                 const Icon = item.icon;
+                if (item.label === 'Login' && isLoggedIn === true) {
+                  return null; 
+                }
+                if (item.label === 'Logout' && isLoggedIn === false) {
+                  return null; 
+                }
                 return (
                   <Link
                     key={item.href}
