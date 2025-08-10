@@ -1,106 +1,145 @@
 const SSLCommerzPayment = require('sslcommerz-lts');
 const pool = require('../db');
-// Add at the start of the function
-if (!process.env.STORE_ID || !process.env.STORE_PASSWORD) {
-  return res.status(500).json({
-    success: false,
-    message: 'Payment gateway not configured'
-  });
-}
-const AZURE_BACKEND_URL = process.env.AZURE_BACKEND_URL;
+
 const initPayment = async (req, res) => {
-    const { eventId, userId } = req.body;
+    console.log("STORE_ID:", process.env.STORE_ID);
+    console.log("STORE_PASSWORD:", process.env.STORE_PASSWORD ? "Loaded" : "Not Loaded");
+    console.log("AZURE_BACKEND_URL:", process.env.AZURE_BACKEND_URL);
 
     try {
-        // Step 1: Fetch event details
-        const eventResult = await pool.query(
-            `SELECT name, price FROM event WHERE id = $1`, 
+        const { eventId, userId } = req.body;
+        
+        // Input validation
+        if (!eventId || !userId) {
+            return res.status(400).json({ success: false, error: 'Missing eventId or userId' });
+        }
+
+        console.log("Received client data:", { eventId, userId });
+
+        const event = await pool.query(
+            `SELECT name, price FROM event WHERE id = $1 AND is_paid = true`,
             [eventId]
         );
-        
-        if (eventResult.rows.length === 0) {
-            return res.status(404).json({ message: 'Event not found.' });
-        }
-        const { name: eventTitle, price: eventFee } = eventResult.rows[0];
 
-        // Step 2: Fetch user details - FIXED COLUMN NAME
-        const userResult = await pool.query(
-            `SELECT first_name, email, phone FROM users WHERE id = $1`, 
-            [userId]
-        );
-        
-        if (userResult.rows.length === 0) {
-            return res.status(404).json({ message: 'User not found.' });
-        }
-        // Fixed destructuring to match first_name
-        const { first_name: userName, email: userEmail, phone: userPhone } = userResult.rows[0];
-       
-        // Step 3: Generate transaction ID
-        const tran_id = `event_reg_${userId}_${eventId}_${Date.now()}`;
+        console.log("Database query result:", event.rows);
 
-        // Step 4: Prepare SSLCommerz data - ENHANCED WITH VALIDATION
-        const data = {
-            total_amount: eventFee,
+        if (event.rows.length === 0) {
+            return res.status(400).json({ success: false, error: 'Event not found or not payable' });
+        }
+
+        const eventDetails = event.rows[0];
+        const tran_id = `event_${eventId}_user_${userId}_${Date.now()}`;
+
+        const paymentData = {
+            total_amount: eventDetails.price,
             currency: 'BDT',
             tran_id: tran_id,
-            success_url: `${AZURE_BACKEND_URL}/api/payment/success`,
-            fail_url: `${AZURE_BACKEND_URL}/api/payment/fail`,
-            cancel_url: `${AZURE_BACKEND_URL}/api/payment/cancel`,
-            ipn_url: `${AZURE_BACKEND_URL}/api/payment/ipn`,
-            shipping_method: 'NO',
-            product_name: eventTitle.substring(0, 50), // Truncate if too long
-            product_category: 'Event Registration',
-            product_profile: 'general',
-            cus_name: userName || 'Customer', // Fallback if undefined
-            cus_email: userEmail,
-            cus_add1: 'N/A', 
-            cus_city: 'N/A',
+            success_url: `${process.env.AZURE_BACKEND_URL}/api/payment/success`,
+            fail_url: `${process.env.AZURE_BACKEND_URL}/api/payment/fail`,
+            cancel_url: `${process.env.AZURE_BACKEND_URL}/payment/cancel`,
+            cus_name: 'Test Customer',
+            cus_email: 'customer@example.com',
+            cus_phone: '01700000000',
+            cus_add1: 'Dhaka',
+            cus_city: 'Dhaka',
             cus_country: 'Bangladesh',
-            cus_phone: userPhone || '01700000000' // Fallback if undefined
+            cus_postcode: '1000',
+            shipping_method: 'NO',
+            product_name: eventDetails.name.length > 50 
+                ? `${eventDetails.name.substring(0, 47)}...` 
+                : eventDetails.name,
+            product_category: 'Event',
+            product_profile: 'general',
+            multi_card_name: '',
+            allowed_bin: '',
+            emi_option: 0
         };
 
-        // DEBUG: Log the payload being sent
-        console.log('SSLCommerz Request Payload:', data);
-
-        // Step 5: Initiate payment
+        console.log("Final payload for SSLCommerz:", paymentData);
+        
         const sslcz = new SSLCommerzPayment(
-            process.env.STORE_ID, 
-            process.env.STORE_PASSWORD, 
-            false // false for sandbox, true for production
+            process.env.STORE_ID,
+            process.env.STORE_PASSWORD,
+            false
         );
         
-        const apiResponse = await sslcz.init(data);
-        
-        // DEBUG: Log full API response
-        console.log('SSLCommerz API Response:', apiResponse);
+        const apiResponse = await sslcz.init(paymentData);
+        console.log("Full SSLCommerz API response:", apiResponse);
 
-        // Step 6: Save pending transaction
-        await pool.query(
-            `INSERT INTO event_transactions (
-                transaction_id, user_id, event_id, 
-                amount, status
-            ) VALUES ($1, $2, $3, $4, $5)`,
-            [tran_id, userId, eventId, eventFee, 'PENDING']
-        );
-
-        if (!apiResponse.GatewayPageURL) {
-            throw new Error(`No GatewayPageURL. Response: ${JSON.stringify(apiResponse)}`);
+        if (apiResponse?.status === 'SUCCESS' && apiResponse.GatewayPageURL) {
+            return res.status(200).json({ 
+                success: true, 
+                paymentUrl: apiResponse.GatewayPageURL,
+                sessionKey: apiResponse.sessionkey 
+            });
+        } else {
+            const errorReason = apiResponse?.failedreason || 'No Gateway URL received';
+            console.error("SSLCommerz API failed:", errorReason);
+            return res.status(400).json({ 
+                success: false, 
+                error: errorReason,
+                fullResponse: apiResponse 
+            });
         }
 
-        return res.status(200).json({ 
-            success: true,
-            paymentUrl: apiResponse.GatewayPageURL 
-        });
-
     } catch (error) {
-        console.error('Payment initiation error:', error);
-        res.status(500).json({ 
-            success: false,
-            message: 'Failed to initiate payment.',
-            error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        console.error("Payment initiation error:", error.message);
+        return res.status(500).json({ 
+            success: false, 
+            error: error.message || 'Payment initiation failed' 
         });
     }
 };
 
-module.exports = { initPayment };
+const success = async (req, res) => {
+  try {
+    console.log("Payment success callback data:", req.body);
+    
+    if (!req.body.tran_id) {
+      console.error('Missing transaction ID in success callback');
+      return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=error&reason=missing_tran_id`);
+    }
+
+    // Verify payment with SSLCommerz validation API if needed
+    
+    const result = await pool.query(
+      `INSERT INTO event_transactions 
+       (transaction_id, status, amount, event_id, user_id) 
+       VALUES ($1, 'success', $2, $3, $4)`,
+      [
+        req.body.tran_id,
+        req.body.amount,
+        req.body.value_a, // Assuming you pass eventId as value_a
+        req.body.value_b  // Assuming you pass userId as value_b
+      ]
+    );
+
+    console.log('Database insert result:', result.rowCount);
+    
+    if (result.rowCount === 1) {
+      return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=success&tran_id=${req.body.tran_id}`);
+    } else {
+      console.error('Database insert failed');
+      return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=error&reason=db_failed`);
+    }
+    
+  } catch (error) {
+    console.error('Payment success error:', error);
+    return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=error&reason=exception`);
+  }
+};
+
+const fail = async (req, res) => {
+  try {
+    await pool.query(
+      `INSERT INTO event_transactions (transaction_id, status) VALUES ($1, 'failed')`,
+      [req.body.tran_id]
+    );
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=failed`);
+  } catch (error) {
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=error`);
+  }
+};
+
+
+module.exports = { initPayment, success, fail  };

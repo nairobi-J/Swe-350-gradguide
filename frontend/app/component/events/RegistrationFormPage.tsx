@@ -1,32 +1,30 @@
+// frontend/app/component/events/RegistrationFormPage.tsx
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
+import { Event, RegistrationField } from '../types'; // Only Event and RegistrationField needed
 import axios from 'axios';
-
 const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
-
 interface RegistrationModalProps {
-  event: {
-    id: number;
-    name: string;
-    isPaid: boolean;
-  } | null;
+  event: Event | null;
   isOpen: boolean;
   onClose: () => void;
+  // Removed: onFinalizeRegistration, setMessage, setMessageType
 }
 
 const RegistrationModal: React.FC<RegistrationModalProps> = ({
   event,
   isOpen,
   onClose,
+  // Removed: onFinalizeRegistration, setMessage, setMessageType from destructuring
 }) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isFieldsLoading, setIsFieldsLoading] = useState(true);
-  const [fetchedRegistrationFields, setFetchedRegistrationFields] = useState<any[] | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [fetchedRegistrationFields, setFetchedRegistrationFields] = useState<RegistrationField[] | null>(null);
+  const [isLoading, setIsLoading] = useState(false); // For submit button loading state
 
-  // Fetch registration fields
+  // useEffect to fetch registration fields
   useEffect(() => {
     if (event?.id && isOpen) {
       setIsFieldsLoading(true);
@@ -39,13 +37,13 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
           if (Array.isArray(response.data)) {
             setFetchedRegistrationFields(response.data);
           } else {
-            console.error("Invalid registration fields format");
+            console.error("Backend returned non-array for registration fields:", response.data);
             setFetchedRegistrationFields([]);
           }
           setIsFieldsLoading(false);
         })
         .catch(error => {
-          console.error("Error:", error);
+          console.error("Error fetching registration fields:", error);
           setIsFieldsLoading(false);
         });
     } else if (!isOpen) {
@@ -54,7 +52,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
     }
   }, [event?.id, isOpen]);
 
-  // Initialize form data
+  // useEffect for initial form data
   useEffect(() => {
     if (event && isOpen && fetchedRegistrationFields) {
       const initialData: Record<string, string> = {};
@@ -66,14 +64,16 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
     }
   }, [event, isOpen, fetchedRegistrationFields]);
 
+  // handleChange function
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setErrors(prev => ({ ...prev, [name]: '' }));
-  }, []);
+  }, [setFormData, setErrors]);
 
+  // validateForm function
   const validateForm = useCallback((): boolean => {
-    if (!event || !Array.isArray(fetchedRegistrationFields)) return false;
+    if (!event || !Array.isArray(fetchedRegistrationFields) || fetchedRegistrationFields.length === 0) return false;
 
     const newErrors: Record<string, string> = {};
     let isValid = true;
@@ -87,61 +87,54 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
     setErrors(newErrors);
     return isValid;
-  }, [event, fetchedRegistrationFields, formData]);
+  }, [event, fetchedRegistrationFields, formData, setErrors]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  // handleSubmit function
+const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (!validateForm() || !event) {
-      console.error("Please fill in all required fields.");
-      return;
-    }
+  if (!validateForm() || !event) return;
 
-    setIsLoading(true);
+  setIsLoading(true);
 
-    try {
-      if (event.isPaid) {
-        // Payment required - initiate SSLCommerz flow
-        const paymentResponse = await axios.post(
-          `${AZURE_BACKEND_URL}/api/payment/init`,
-          {
-            eventId: event.id,
-            formData: formData
-          }
-        );
-
-        if (paymentResponse.data.paymentUrl) {
-          // Save form data temporarily
-          sessionStorage.setItem(
-            `pending_registration_${event.id}`,
-            JSON.stringify(formData)
-          );
-          window.location.href = paymentResponse.data.paymentUrl;
-        } else {
-          throw new Error('Payment initiation failed');
+  try {
+    if (event.is_paid) {
+      // Updated URL with /api prefix
+      const paymentResponse = await axios.post(
+        `${AZURE_BACKEND_URL}/api/payment/init`, // Added /api
+        {
+          eventId: event.id,
+          userId: 1 // TODO: Replace with actual user ID from auth
         }
-      } else {
-        // Free event - register directly
-        const response = await axios.post(
-          `${AZURE_BACKEND_URL}/event/register-event`,
-          {
-            eventId: event.id,
-            formData: formData
-          }
-        );
-        alert("Registration successful!");
-        onClose();
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert(error.response?.data?.message || "Registration failed");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [event, formData, validateForm, onClose]);
+      );
 
+      if (paymentResponse.data?.paymentUrl) {
+        // Recommended redirect method
+        window.location.href = paymentResponse.data.paymentUrl;
+      } else {
+        throw new Error('No payment URL received');
+      }
+    } else {
+      // Free event registration
+      await axios.post(`${AZURE_BACKEND_URL}/api/event/register`, {
+        eventId: event.id,
+        formData
+      });
+      onClose();
+    }
+  } catch (error) {
+    console.error("Payment error:", error.response?.data || error.message);
+    alert(
+      error.response?.data?.message || 
+      'Payment initiation failed. Please try again.'
+    );
+  } finally {
+    setIsLoading(false);
+  }
+}, [event, formData, validateForm, onClose]);
   if (!isOpen) return null;
 
+  // Show loading state for fields
   if (isFieldsLoading) {
     return (
       <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -158,13 +151,15 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
     );
   }
 
+  // Handle case where fields failed to load or no fields are defined
   if (!event || !Array.isArray(fetchedRegistrationFields) || fetchedRegistrationFields.length === 0) {
+    console.log("No registration fields found for event or invalid format:", fetchedRegistrationFields);
     return (
       <div className="fixed inset-0 z-50 overflow-y-auto">
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-xl text-red-700 flex flex-col items-center">
             <X className="h-8 w-8 mb-3" />
-            <p>No registration fields available for this event</p>
+            <p>No custom registration fields defined for this event, or data is invalid.</p>
             <button onClick={onClose} className="mt-4 px-4 py-2 bg-gray-200 rounded-lg">Close</button>
           </div>
         </div>
@@ -230,13 +225,13 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
             <div className="pt-4">
               <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                {isLoading ? 'Processing...' : 
-                 (event.isPaid ? 'Proceed to Payment' : 'Confirm Registration')}
-              </button>
+  type="submit"
+  disabled={isLoading}
+  className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+>
+  {isLoading ? 'Processing...' : 
+   (event?.is_paid ? 'Proceed to Payment' : 'Confirm Registration')}
+</button>
             </div>
           </form>
         </div>
