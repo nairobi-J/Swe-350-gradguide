@@ -59,8 +59,9 @@ export default function HomePage() {
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.5, delay: 0.4 }}
                     className="mt-8 px-8 py-3 bg-blue-600 text-white font-semibold rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+                    
                 >
-                    Start Your Journey
+                  <a href='/dashboard'>Start Your Journey </a>  
                 </motion.button>
             </div>
         </div>
