@@ -2,11 +2,30 @@
 
 import Link from 'next/link';
 import '../globals.css';
-import { GraduationCap, Home, Bot, BookOpen, Briefcase, TrendingUp, Menu, X, Calendar, User } from 'lucide-react';
-import { useState } from 'react';
+import { GraduationCap, Home, Bot, BookOpen, Briefcase, TrendingUp, Menu, X, Calendar, User, LogInIcon, LogOutIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isloggedIn, setIsLoggedIn] = useState(false);
+
+  
+
+  const handleLogout = () => {
+    if(!isloggedIn){
+      window.location.href = '/dashboard'; // Redirect to login page if not logged in
+      return;
+    } 
+    localStorage.removeItem('token'); // Clear the token from local storage
+    setIsLoggedIn(false); // Update the state to reflect the logout
+    window.location.href = '/dashboard/home'; // Redirect to the dashboard or login page
+  }
+
+   useEffect(() => {
+    
+    const token = localStorage.getItem('token'); 
+    setIsLoggedIn(!!token);
+  }, []);
 
   const navItems = [
    
@@ -17,7 +36,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
      //{ href: '/dashboard/company', label: 'Job', icon: Briefcase },
     { href: '/dashboard/company', label: 'Career Path', icon: TrendingUp },
      {href : '/dashboard/user', label:'User', icon:User},
-    
+     { href: isloggedIn? '/dashboard/home': '/dashboard', label: isloggedIn ? 'Logout' : 'Login', icon: isloggedIn ? LogOutIcon : LogInIcon, onClick: handleLogout },
+
   ];
 
   return (
@@ -43,6 +63,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <nav className="hidden md:flex items-center space-x-4">
               {navItems.map((item) => {
                 const Icon = item.icon;
+                
+                // Handle logout/login button separately
+                if (item.onClick) {
+                  return (
+                    <button
+                      key={item.label}
+                      onClick={item.onClick}
+                      className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                    >
+                      <Icon className="h-4 w-4 mr-2" />
+                      {item.label}
+                    </button>
+                  );
+                }
+                
                 return (
                   <Link
                     key={item.href}
@@ -75,6 +110,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <nav className="md:hidden bg-white border-t border-gray-200 px-4 py-2">
             {navItems.map((item) => {
               const Icon = item.icon;
+              
+              // Handle logout/login button separately
+              if (item.onClick) {
+                return (
+                  <button
+                    key={item.label}
+                    onClick={() => {
+                      item.onClick();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition-colors w-full text-left"
+                  >
+                    <Icon className="h-4 w-4 mr-2" />
+                    {item.label}
+                  </button>
+                );
+              }
+              
               return (
                 <Link
                   key={item.href}
