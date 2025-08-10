@@ -15,7 +15,7 @@ export default function UserList({ onSelectUser, selectedUser }: { onSelectUser:
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const res = await fetch(`https:${AZURE_BACKEND_URL}/auth/getUsers`);
+                const res = await fetch(`${AZURE_BACKEND_URL}/auth/getUsers`);
                 if (!res.ok) {
                     throw new Error(`HTTP error! status: ${res.status}`);
                 }

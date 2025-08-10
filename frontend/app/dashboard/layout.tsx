@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import '../globals.css';
-import { GraduationCap, Home, Bot, BookOpen, Briefcase, TrendingUp, Menu, X, Calendar, User, LogInIcon, LogOutIcon } from 'lucide-react';
+import { GraduationCap, Home, Bot, BookOpen, Briefcase, TrendingUp, Menu, X, Calendar, User, LogInIcon, LogOutIcon, MessageCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -30,6 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navItems = [
    
     //{ href: '/dashboard/home', label: 'Home', icon: Home },
+    { href: '/dashboard/chat', label: 'Chat', icon: MessageCircle },
     { href: '/dashboard/ai-coach', label: 'AI Coach', icon: Bot },
     { href: '/dashboard/higher-studies', label: 'Study Abroad', icon: BookOpen },
     { href: '/dashboard/event', label: 'Events', icon: Calendar},
