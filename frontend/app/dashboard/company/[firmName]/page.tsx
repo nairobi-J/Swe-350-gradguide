@@ -9,20 +9,11 @@ interface CompanyDetailsPageProps {
   params: { firmName: string };
   searchParams?: { [key: string]: string | string[] | undefined };
 }
-<<<<<<< HEAD
-
-=======
- const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
->>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
 // Function to fetch initial data on the server
 async function getInitialCompanyData(firmName: string): Promise<{ data: CompanyDetailData | null; error: string | null }> {
   const initialLimit = 10; // Fetch the first 10 reviews initially
   try {
-<<<<<<< HEAD
     const res = await fetch(`http://localhost:5000/review/review-by-firm/?firmName=${firmName}&?page=1&limit=${initialLimit}`, {
-=======
-    const res = await fetch(`${AZURE_BACKEND_URL}/review/review-by-firm/?firmName=${firmName}&?page=1&limit=${initialLimit}`, {
->>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
       cache: 'no-store' // Ensures this is SSR, not cached as a static page
     });
 
