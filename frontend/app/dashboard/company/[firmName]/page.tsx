@@ -1,6 +1,6 @@
 // app/companies/[firmName]/page.tsx
 // NO "use client" here! This is a Server Component
-
+const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
 import { CompanyDetailData } from '@/types'; // Adjust path
 import { CompanyDetailsClientComponent } from './companyDetailsClientComponent'; // Import the Client Component
 
@@ -13,7 +13,7 @@ interface CompanyDetailsPageProps {
 async function getInitialCompanyData(firmName: string): Promise<{ data: CompanyDetailData | null; error: string | null }> {
   const initialLimit = 10; // Fetch the first 10 reviews initially
   try {
-    const res = await fetch(`http://localhost:5000/review/review-by-firm/?firmName=${firmName}&?page=1&limit=${initialLimit}`, {
+    const res = await fetch(`${AZURE_BACKEND_URL}/review/review-by-firm/?firmName=${firmName}&?page=1&limit=${initialLimit}`, {
       cache: 'no-store' // Ensures this is SSR, not cached as a static page
     });
 

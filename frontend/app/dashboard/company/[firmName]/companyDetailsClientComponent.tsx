@@ -1,6 +1,6 @@
 // app/companies/[firmName]/CompanyDetailsClientComponent.tsx
 "use client"; // This makes it a Client Component
-
+const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { CompanyDetailData, Review, CompanyStatistics, Pagination } from '@/types'; 
@@ -156,7 +156,7 @@ export function CompanyDetailsClientComponent({ initialData, initialError, firmN
         setLoadingMore(true);
         const nextPage = currentPage + 1;
         try {
-            const res = await fetch(`http://localhost:5000/review/review-by-firm/?firmName=${firmName}&page=${nextPage}&limit=${pagination.limit}`);
+            const res = await fetch(`${AZURE_BACKEND_URL}/review/review-by-firm/?firmName=${firmName}&page=${nextPage}&limit=${pagination.limit}`);
             if (!res.ok) {
                 throw new Error(`Error loading more reviews: ${res.status} ${res.statusText}`);
             }
