@@ -28,11 +28,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
   useEffect(() => {
     if (event?.id && isOpen) {
       setIsFieldsLoading(true);
-<<<<<<< HEAD
-      axios.get(`http://localhost:5000/event/registration?event_id=${event.id}`)
-=======
       axios.get(`${AZURE_BACKEND_URL}/event/registration?event_id=${event.id}`)
->>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
         .then(response => {
           if (Array.isArray(response.data)) {
             setFetchedRegistrationFields(response.data);

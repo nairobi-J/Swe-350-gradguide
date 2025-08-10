@@ -3,17 +3,11 @@
 import React, { useState } from 'react';
 import { Info, DollarSign, Calendar, MapPin, Clock, HelpCircle, Send, User, MessageSquare, Banknote } from 'lucide-react';
 import LoadingSpinner from '../shared/LoadingSpinner';
-<<<<<<< HEAD
-import { Event, Feedback, Query, Answer, Registration } from '../types';
-import RegistrationModal from './RegistrationFormPage';
-
-=======
 import axios from 'axios';
 import { comment } from 'postcss';
 import { Event, Feedback, Query, Answer, Registration } from '../types';
 import RegistrationModal from './RegistrationFormPage';
 const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
->>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
 interface EventDetailPageProps {
   event: Event | null;
   onRegisterEvent: (eventId: string) => void;
@@ -59,11 +53,6 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
   const eventFeedbacks = feedbacks.filter(f => f.eventId === event.id);
   const eventQueries = queries.filter(q => q.eventId === event.id);
 
-<<<<<<< HEAD
-  const handleSendFeedback = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (feedbackComment.trim()) {
-=======
   const handleSendFeedback = async(e: React.FormEvent) => {
     e.preventDefault();
     if (feedbackComment.trim()) {
@@ -76,17 +65,11 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
         "Content-Type": 'application/json',
       }
     })
->>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
       addFeedback(event.id, currentUserId, `User ${currentUserId.split('-')[1]}`, feedbackComment);
       setFeedbackComment('');
     }
   };
 
-<<<<<<< HEAD
-  const handleSendQuery = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (queryText.trim()) {
-=======
   const handleSendQuery = async(e: React.FormEvent) => {
     e.preventDefault();
     if (queryText.trim()) {
@@ -99,7 +82,6 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
         "Content-Type": 'application/json',
       }
     })
->>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
       addQuery(event.id, currentUserId, `User ${currentUserId.split('-')[1]}`, queryText);
       setQueryText('');
     }
@@ -109,11 +91,6 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
     setAnswerText(prev => ({ ...prev, [queryId]: value }));
   };
 
-<<<<<<< HEAD
-  const handleSubmitAnswer = (queryId: string) => {
-    if (answerText[queryId]?.trim()) {
-      addAnswerToQuery(queryId, currentUserId, "Event Host", answerText[queryId]);
-=======
   const handleSubmitAnswer = async(queryId: string) => {
     if (answerText[queryId] && answerText[queryId].trim()) {
       await axios.post(`${AZURE_BACKEND_URL}/eventQuery/reply`, {
@@ -126,7 +103,6 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
       }
     })
       addAnswerToQuery(queryId, currentUserId, "Event Host", answerText[queryId]); // Simulating a host reply
->>>>>>> 7e59814f67febc65859046c5ce5db8127204fc19
       setAnswerText(prev => ({ ...prev, [queryId]: '' }));
     }
   };
