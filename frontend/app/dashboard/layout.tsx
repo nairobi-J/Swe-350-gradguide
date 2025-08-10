@@ -35,7 +35,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: '/dashboard/event', label: 'Events', icon: Calendar},
      //{ href: '/dashboard/company', label: 'Job', icon: Briefcase },
     { href: '/dashboard/company', label: 'Career Path', icon: TrendingUp },
-     {href : '/dashboard/user', label:'User', icon:User},
+     {href : '/dashboard/user', label:'Road Map', icon:User},
      { href: isloggedIn? '/dashboard/home': '/dashboard', label: isloggedIn ? 'Logout' : 'Login', icon: isloggedIn ? LogOutIcon : LogInIcon, onClick: handleLogout },
 
   ];
