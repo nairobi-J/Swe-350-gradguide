@@ -53,23 +53,24 @@ app.use('/api/payment', paymentRoutes);
 app.use('/generate', guidelines);
 
 
+// In your Express backend
 
 
-io.on('connection', (socket) => {
-  console.log(`user connected: ${socket.id}`);
-  socket.on('join_room', (data) => {
-    socket.join(data.chatId);
-     console.log(`User ${socket.id} joined room: ${data.chatId}`);
-  })
+// io.on('connection', (socket) => {
+//   console.log(`user connected: ${socket.id}`);
+//   socket.on('join_room', (data) => {
+//     socket.join(data.chatId);
+//      console.log(`User ${socket.id} joined room: ${data.chatId}`);
+//   })
 
-  socket.on('send_message', (data)=>{
-    io.to(data.chatId).emit('receive_message', data);
-  });
+//   socket.on('send_message', (data)=>{
+//     io.to(data.chatId).emit('receive_message', data);
+//   });
 
-  socket.on('disconnect', () => {
-    console.log(`User disconnected : ${socket.id}`);
-  })
-})
+//   socket.on('disconnect', () => {
+//     console.log(`User disconnected : ${socket.id}`);
+//   })
+// })
 
 
 // You had some duplicate app.use() statements that are not necessary.

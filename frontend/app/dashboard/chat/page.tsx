@@ -1,67 +1,31 @@
-// app/chat/[chatId]/page.tsx
+// app/page.tsx
+
 'use client';
+import { useState } from 'react';
+import UserList from '@/app/component/chat/UserList';
+//import ChatComponent from '@/app/component/chat/ChatComponent';
 
-import { useEffect, useState } from 'react';
-import { socket } from '@/lib/socket';
-
-interface Message {
-    user: string;
-    text: string;
-    chatId: string;
+interface User {
+    id: string;
+    name: string;
 }
 
-export default function ChatPage({ params }: { params: { chatId: string } }) {
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [messageInput, setMessageInput] = useState('');
+export default function HomePage() {
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-    const { chatId } = params;
-
-    useEffect(() => {
-        // Join the specific chat room
-        socket.emit('join_room', { chatId });
-
-        // Listen for incoming messages
-        socket.on('receive_message', (data: Message) => {
-            setMessages((prevMessages) => [...prevMessages, data]);
-        });
-
-        // Clean up the event listener on unmount
-        return () => {
-            socket.off('receive_message');
-        };
-    }, [chatId]);
-
-    const sendMessage = () => {
-        if (messageInput.trim()) {
-            const messageData = {
-                chatId,
-                user: 'current-user-id', // Replace with the logged-in user's ID
-                text: messageInput
-            };
-
-            // Emit the message to the server
-            socket.emit('send_message', messageData);
-            setMessages((prevMessages) => [...prevMessages, messageData]); // Optimistically add the message to the UI
-            setMessageInput('');
-        }
-    };
+    // This is a placeholder for the logged-in user's ID
+    const currentUser = "current_user_id";
 
     return (
-        <div>
-            {/* Your chat UI */}
-            <div>
-                {messages.map((msg, index) => (
-                    <div key={index}>
-                        <strong>{msg.user}:</strong> {msg.text}
-                    </div>
-                ))}
-            </div>
-            <input
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-            />
-            <button onClick={sendMessage}>Send</button>
+        <div style={{ display: 'flex', height: '100vh' }}>
+            <UserList onSelectUser={setSelectedUser} />
+            {/* <div style={{ flex: 1, padding: '1rem' }}>
+                {selectedUser ? (
+                    <ChatComponent currentUser={currentUser} recipientUser={selectedUser} />
+                ) : (
+                    <p>Select a user to start chatting.</p>
+                )}
+            </div> */}
         </div>
     );
 }

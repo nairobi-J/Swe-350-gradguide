@@ -108,6 +108,21 @@ const login = async (req, res) => {
     }
 };
 
+const getUsers = async(req, res) => {
+    try {
+        // 1. Fetch all users from the database
+        const result = await pool.query(
+            `SELECT first_name , last_name , id FROM users` // It's better to select specific columns, not all of them
+        );
+
+        // 2. Return the list of users as a JSON response
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error('Fetching users failed:', error);
+        res.status(500).json({ message: 'Failed to fetch users due to a server error.' });
+    }
+}
+
 // You would typically export this function to be used in your Express routes
 // module.exports = { login, register }; // If you have both in one file
-module.exports = { register, login };
+module.exports = { register, login, getUsers };
