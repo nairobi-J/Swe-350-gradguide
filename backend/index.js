@@ -1,4 +1,6 @@
 const express = require('express');
+const { createServer } = require('http');
+const { Server: SocketIoServer } = require('socket.io');
 const cors = require('cors');
 require('dotenv').config();
 const pool = require('./db');
@@ -10,6 +12,14 @@ app.use(express.json());
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
+const server = createServer(app);
+const io = new SocketIoServer(server, {
+  cors: {
+    origin : "http://localhost:3000",
+    methods:["GET", "POST"]
+  }
+})
+
 
 // All route files are required at the top
 const authRoutes = require('./routes/authRoutes');
@@ -25,24 +35,9 @@ const eventQueryRoutes = require('./routes/eventQueryRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const guidelines = require('./routes/guidelines');
 const paymentRoutes = require('./routes/paymentRoutes');
-// Add this temporary route ABOVE all other middleware
-// app.get('/route-test', (req, res) => {
-//   const routePath = app._router.stack
-//     .filter(layer => layer.name === 'router' && layer.regexp.test('/generate/response'))
-//     .map(layer => layer.path);
-    
-//   res.json({ 
-//     actualRoutePath: routePath.length ? routePath[0] : 'NOT FOUND',
-//     fullPath: '/generate/response',
-//     registeredRoutes: app._router.stack
-//       .filter(layer => layer.route)
-//       .map(layer => ({
-//         path: layer.route.path,
-//         method: Object.keys(layer.route.methods)[0]
-//       }))
-//   });
-// });
-// Use the routes for their specified paths
+
+
+
 app.use('/auth', authRoutes);
 app.use('/uni', universityRoutes);
 app.use('/uni/programs', universityProgramsRoutes);
@@ -56,6 +51,26 @@ app.use('/eventQuery', eventQueryRoutes);
 app.use('/review', reviewRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/generate', guidelines);
+
+
+// In your Express backend
+
+
+// io.on('connection', (socket) => {
+//   console.log(`user connected: ${socket.id}`);
+//   socket.on('join_room', (data) => {
+//     socket.join(data.chatId);
+//      console.log(`User ${socket.id} joined room: ${data.chatId}`);
+//   })
+
+//   socket.on('send_message', (data)=>{
+//     io.to(data.chatId).emit('receive_message', data);
+//   });
+
+//   socket.on('disconnect', () => {
+//     console.log(`User disconnected : ${socket.id}`);
+//   })
+// })
 
 
 // You had some duplicate app.use() statements that are not necessary.

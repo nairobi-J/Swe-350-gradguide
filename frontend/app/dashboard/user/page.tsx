@@ -106,7 +106,7 @@ const generateGuidelines = async () => {
       {editingState ? (
         isTextArea ? (
           <textarea
-            className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 bg-slate-50 focus:bg-white transition-all duration-200 resize-none"
+            className="text-black w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 bg-slate-50 focus:bg-white transition-all duration-200 resize-none"
             value={value}
             onChange={(e) => setter(e.target.value)}
             rows={3}
@@ -258,7 +258,7 @@ const generateGuidelines = async () => {
                 {/* Generate Button */}
                 <button
                   onClick={generateGuidelines}
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 px-8 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-lg font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-black py-4 px-8 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-lg font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   disabled={isLoading}
                 >
                   <div className="flex items-center justify-center gap-3">

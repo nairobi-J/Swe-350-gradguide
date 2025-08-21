@@ -21,7 +21,11 @@
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
+    "socket.io": "^4.8.1",
     "sslcommerz-lts": "^1.1.0",
     "sslcommerz-nodejs": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/socket.io": "^3.0.1"
   }
 }
