@@ -10,8 +10,9 @@ export default function HigherStudiesPage() {
  const [programCount, setProgramCount] = useState(null);
  const [countryCount, setCountryCount] = useState(null);
  const [universityCount, setUniversityCount] = useState(null);
-  const [filteredUniversities, setFilteredUniversities] = useState([]);
+  const [filteredPrograms, setFilteredPrograms] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchLocation, setSearchLocation] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
  const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
@@ -54,6 +55,7 @@ export default function HigherStudiesPage() {
 
         // Ensure we're setting the actual array to 'Universities' state
         setPrograms(result.data);
+        setFilteredPrograms(result.data); // Initialize filtered Programs with all fetched Programs
         //setFilteredUniversities(result.data); // Initialize filtered Universities with all fetched Universities
 
         console.log("Full API Response Object:", result);
@@ -101,39 +103,47 @@ export default function HigherStudiesPage() {
 
   // Effect to filter Universities whenever searchTerm or Universities changes
   useEffect(() => {
-    if (!universities.length) return; // Don't filter if Universities aren't loaded yet
+    if (!programs.length) return; // Don't filter if Universities aren't loaded yet
 
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    const lowerCaseSearchLocation = searchLocation.toLowerCase();
 
-    const results = universities.filter(institution => {
+    const results = programs.filter(institution => {
       // Check institution name
-      if (institution.name && institution.name.toLowerCase().includes(lowerCaseSearchTerm)) {
+      if (institution.university && institution.university.toLowerCase().includes(lowerCaseSearchTerm)) {
         return true;
       }
-      // Optional: Check country
-      if (institution.country && institution.country.toLowerCase().includes(lowerCaseSearchTerm)) {
+       if (institution.program && institution.program.toLowerCase().includes(lowerCaseSearchTerm)) {
         return true;
       }
       // Optional: Check domains
-      if (institution.domains && institution.domains.some(domain => domain.toLowerCase().includes(lowerCaseSearchTerm))) {
-        return true;
-      }
-      // Optional: Check state-province
-      if (institution['state-province'] && institution['state-province'].toLowerCase().includes(lowerCaseSearchTerm)) {
+      if (institution.domain && institution.domain.some(domain => domain.toLowerCase().includes(lowerCaseSearchTerm))) {
         return true;
       }
       // Add more properties to search through if needed (e.g., categories, program names)
       return false;
     });
 
-    setFilteredUniversities(results);
-  }, [searchTerm, universities]); // Re-run this effect when searchTerm or original Universities change
+    // Filter by location if searchLocation is provided
+    if (searchLocation) {
+      return setFilteredPrograms(results.filter(institution => {
+        return (institution.country && institution.country.toLowerCase().includes(lowerCaseSearchLocation)) ||
+               (institution.city && institution.city.toLowerCase().includes(lowerCaseSearchLocation));
+      }));
+    }
+
+    setFilteredPrograms(results);
+  }, [searchTerm, searchLocation, programs]); // Re-run this effect when searchTerm or original Universities change
 
   // Handler for the search input field
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
 
+  // Handler for the search input field for location
+  const handleSearchLocationChange = (event) => {
+    setSearchLocation(event.target.value);
+  };
   // Handler for the search button (optional, as filtering happens on input change)
   const handleSearchButtonClick = () => {
     
@@ -240,6 +250,8 @@ const formatLivingCostIndex = (value) => {
               type="text"
               placeholder="Job title or keyword"
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={searchTerm}
+              onChange={handleSearchChange}
             />
           </div>
           <div className="relative">
@@ -248,6 +260,8 @@ const formatLivingCostIndex = (value) => {
               type="text"
               placeholder="Location"
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={searchLocation}
+              onChange={handleSearchLocationChange}
             />
           </div>
           {/* <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
@@ -265,7 +279,7 @@ const formatLivingCostIndex = (value) => {
       </p>
     ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-black">
-        {programs.map((program, index) => {
+        {filteredPrograms.map((program, index) => {
           const tuition = parseFloat(program.tuition_usd) || 0;
           const rent = parseFloat(program.rent_usd) || 0;
           const visaFee = parseFloat(program.visa_fee_usd) || 0;

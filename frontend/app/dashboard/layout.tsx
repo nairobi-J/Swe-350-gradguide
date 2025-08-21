@@ -21,10 +21,50 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     window.location.href = '/dashboard/home'; // Redirect to the dashboard or login page
   }
 
-   useEffect(() => {
-    
-    const token = localStorage.getItem('token'); 
-    setIsLoggedIn(!!token);
+  useEffect(() => {
+    // Check initial login status
+    const checkLoginStatus = () => {
+      const token = localStorage.getItem('token');
+      setIsLoggedIn(!!token);
+    };
+
+    // Initial check
+    checkLoginStatus();
+
+    // Check when localStorage changes (most efficient)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'token') {
+        checkLoginStatus();
+      }
+    };
+
+    // Check when page becomes visible again (user comes back from login)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkLoginStatus();
+      }
+    };
+
+    // Check when window gains focus
+    const handleFocus = () => {
+      checkLoginStatus();
+    };
+
+    // Add event listeners
+    window.addEventListener('storage', handleStorageChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    // Fallback: Check periodically every 3 seconds (reduced frequency)
+    const interval = setInterval(checkLoginStatus, 3000);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(interval);
+    };
   }, []);
 
   const navItems = [
