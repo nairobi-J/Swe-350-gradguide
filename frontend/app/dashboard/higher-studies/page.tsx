@@ -2,19 +2,42 @@
 import { BookOpen, GraduationCap, Globe } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Briefcase, MapPin, Search, DollarSign, Clock, Filter, ArrowRight } from 'lucide-react';
-// Define the interface for a single institution object
+
+// Define the interface for a single program object
+interface Program {
+  university: string;
+  program: string;
+  level: string;
+  country: string;
+  city: string;
+  duration_years: string;
+  tuition_usd: string;
+  rent_usd: string;
+  visa_fee_usd: string;
+  insurance_usd: string;
+  exchange_rate: string;
+  link: string;
+  domain?: string[];
+  Living_Cost_Index?: number;
+  University?: string; // Sometimes API returns this instead of 'university'
+}
 
 export default function HigherStudiesPage() {
- const [universities, setUniversities] = useState([]);
- const [programs, setPrograms] = useState([]); 
- const [programCount, setProgramCount] = useState(null);
- const [countryCount, setCountryCount] = useState(null);
- const [universityCount, setUniversityCount] = useState(null);
-  const [filteredPrograms, setFilteredPrograms] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchLocation, setSearchLocation] = useState('');
-  const [loading, setLoading] = useState(true);
+ const [universities, setUniversities] = useState<Program[]>([]);
+ const [programs, setPrograms] = useState<Program[]>([]); 
+ const [programCount, setProgramCount] = useState<number | null>(null);
+ const [countryCount, setCountryCount] = useState<number | null>(null);
+ const [universityCount, setUniversityCount] = useState<number | null>(null);
+  const [filteredPrograms, setFilteredPrograms] = useState<Program[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchLocation, setSearchLocation] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [currentPage, setCurrentPage] = useState<number>(1);
+const [itemsPerPage, setItemsPerPage] = useState<number>(20);
+const [totalPrograms, setTotalPrograms] = useState<number>(0);
+
  const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
 // In your page.tsx file, at the top of your component or function
 //console.log('The backend URL is:', process.env.NEXT_PUBLIC_AZURE_BACKEND_URL);
@@ -22,7 +45,7 @@ export default function HigherStudiesPage() {
   useEffect(() => {
     const fetchUniversityPrograms = async () => {
       try {
-        const response = await fetch(`${AZURE_BACKEND_URL}/uni/programs/get?limit=20`);
+        const response = await fetch(`${AZURE_BACKEND_URL}/uni/programs/get`);
          const count = await fetch(`${AZURE_BACKEND_URL}/uni/programs/count`);
          const programCount = await fetch(`${AZURE_BACKEND_URL}/uni/programs/programs`);
         const countryCount = await fetch(`${AZURE_BACKEND_URL}/uni/programs/countries`);
@@ -56,21 +79,24 @@ export default function HigherStudiesPage() {
         // Ensure we're setting the actual array to 'Universities' state
         setPrograms(result.data);
         setFilteredPrograms(result.data); // Initialize filtered Programs with all fetched Programs
-        //setFilteredUniversities(result.data); // Initialize filtered Universities with all fetched Universities
+        
+        // Set total programs for pagination - using program count as total
+        setTotalPrograms(countProgram.count);
 
         console.log("Full API Response Object:", result);
         console.log("Array being set to 'Universities' state:", result.data);
+        console.log("Total programs for pagination:", countProgram.count);
 
       } catch (err) {
         console.error("Failed to fetch Universities:", err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);
       }
     };
 
     fetchUniversityPrograms();
-  }, []);
+  }, [currentPage, itemsPerPage]);
   // Effect to fetch Universities initially
   // useEffect(() => {
   //   const fetchUniversities = async () => {
@@ -136,12 +162,12 @@ export default function HigherStudiesPage() {
   }, [searchTerm, searchLocation, programs]); // Re-run this effect when searchTerm or original Universities change
 
   // Handler for the search input field
-  const handleSearchChange = (event) => {
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
   // Handler for the search input field for location
-  const handleSearchLocationChange = (event) => {
+  const handleSearchLocationChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchLocation(event.target.value);
   };
   // Handler for the search button (optional, as filtering happens on input change)
@@ -149,7 +175,7 @@ export default function HigherStudiesPage() {
     
     console.log("Search button clicked for:", searchTerm);
   };
-const formatCurrency = (value, currencyCode = 'USD', locale = 'en-US') => {
+const formatCurrency = (value: any, currencyCode = 'USD', locale = 'en-US') => {
   if (typeof value !== 'number' || isNaN(value)) {
     return 'N/A';
   }
@@ -161,11 +187,104 @@ const formatCurrency = (value, currencyCode = 'USD', locale = 'en-US') => {
   }).format(value);
 };
 
-const formatLivingCostIndex = (value) => {
+const formatLivingCostIndex = (value: any) => {
   if (typeof value !== 'number' || isNaN(value)) {
     return 'N/A';
   }
   return `${value} (Global Avg = 100)`;
+};
+
+// Enhanced Pagination component
+const Pagination = ({ totalPrograms, programsPerPage, currentPage, setCurrentPage }: {
+  totalPrograms: number;
+  programsPerPage: number;
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
+}) => {
+    const totalPages = Math.ceil(totalPrograms / programsPerPage);
+    
+    if (totalPages <= 1) return null; // Don't show pagination if only 1 page
+    
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Adjust start page if we're near the end
+    if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+    }
+
+    return (
+        <nav className="flex justify-center items-center space-x-2 mt-6">
+            {/* Previous button */}
+            <button
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                Previous
+            </button>
+            
+            {/* First page */}
+            {startPage > 1 && (
+                <>
+                    <button
+                        onClick={() => setCurrentPage(1)}
+                        className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+                    >
+                        1
+                    </button>
+                    {startPage > 2 && <span className="px-2">...</span>}
+                </>
+            )}
+            
+            {/* Page numbers */}
+            {pageNumbers.map(number => (
+                <button
+                    key={number}
+                    onClick={() => setCurrentPage(number)}
+                    className={`px-3 py-2 text-sm border rounded-md ${
+                        currentPage === number 
+                            ? 'bg-blue-500 text-white border-blue-500' 
+                            : 'border-gray-300 hover:bg-gray-50'
+                    }`}
+                >
+                    {number}
+                </button>
+            ))}
+            
+            {/* Last page */}
+            {endPage < totalPages && (
+                <>
+                    {endPage < totalPages - 1 && <span className="px-2">...</span>}
+                    <button
+                        onClick={() => setCurrentPage(totalPages)}
+                        className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+                    >
+                        {totalPages}
+                    </button>
+                </>
+            )}
+            
+            {/* Next button */}
+            <button
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                Next
+            </button>
+            
+            <div className="ml-4 text-sm text-gray-600">
+                Page {currentPage} of {totalPages} ({totalPrograms} total programs)
+            </div>
+        </nav>
+    );
 };
 
  if (loading) {
@@ -236,7 +355,7 @@ const formatLivingCostIndex = (value) => {
       </div>
 
       { /*Recommended Universities - This now displays filteredUniversities */}
-     
+
 
       {/* Recommended Programs */}
      
@@ -245,41 +364,79 @@ const formatLivingCostIndex = (value) => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-800 h-5 w-5" />
             <input
               type="text"
-              placeholder="Job title or keyword"
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="University or program name"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800"
               value={searchTerm}
               onChange={handleSearchChange}
             />
           </div>
           <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-800 h-5 w-5" />
             <input
               type="text"
-              placeholder="Location"
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Country or city"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800"
               value={searchLocation}
               onChange={handleSearchLocationChange}
             />
           </div>
-          {/* <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
-            Search Jobs
-          </button> */}
+          <div className="flex items-center">
+            <label className="text-sm text-gray-600 mr-2">Per page:</label>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1); // Reset to first page when changing items per page
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
         </div>
       </div>
+
+       {/*pagination component*/}
+      <Pagination
+          totalPrograms={totalPrograms}
+          programsPerPage={itemsPerPage}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+      />
 
       {/* Filters and Results */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
   <div className="lg:col-span-3 space-y-4">
-    {programs.length === 0 ? (
-      <p className="text-center text-gray-600 text-lg">
-        {searchTerm ? `No results found for "${searchTerm}".` : 'No programs found.'}
+    {loading ? (
+      <div className="flex justify-center items-center py-12">
+        <div className="flex flex-col items-center">
+          <svg className="animate-spin h-8 w-8 text-blue-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span className="text-gray-600">Loading programs...</span>
+        </div>
+      </div>
+    ) : programs.length === 0 ? (
+      <p className="text-center text-gray-600 text-lg py-8">
+        {searchTerm || searchLocation ? `No results found for your search criteria.` : 'No programs found.'}
       </p>
     ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-black">
-        {filteredPrograms.map((program, index) => {
+      <>
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-sm text-gray-600">
+            Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalPrograms)} of {totalPrograms} programs
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-black">
+          {filteredPrograms.map((program, index) => {
           const tuition = parseFloat(program.tuition_usd) || 0;
           const rent = parseFloat(program.rent_usd) || 0;
           const visaFee = parseFloat(program.visa_fee_usd) || 0;
@@ -305,7 +462,7 @@ const formatLivingCostIndex = (value) => {
             >
               
               <div className="p-6 flex-grow from-blue-50 to-purple-50">
-                <h2 className="text-2xl font-semibold text-black mb-2">{program.University}</h2>
+                <h2 className="text-2xl font-semibold text-black mb-2">{program.university || program.University}</h2>
                  {program.university && (
                   <h1 className="text-gray-700 text-lg font-bold mb-1">
                     {program.university} 
@@ -351,10 +508,18 @@ const formatLivingCostIndex = (value) => {
            
           );
         })}
-      </div>
+        </div>
+      </>
     )}
   </div>
 </div>
+
+<Pagination
+          totalPrograms={totalPrograms}
+          programsPerPage={itemsPerPage}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+      />
     </div>
   
     </div>
