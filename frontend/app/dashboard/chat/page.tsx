@@ -11,7 +11,7 @@ export default function MessagingSystem() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
 
-
+const BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL
 
 const getLoggedInUserId = () => {
   const token = localStorage.getItem('token');
@@ -46,7 +46,7 @@ const getLoggedInUserId = () => {
     const fetchUsers = async () => {
       try {
         // Replace with your actual API call
-        const response = await fetch(`http://localhost:5000/auth/getUsers`);
+        const response = await fetch(`${BACKEND_URL}/auth/getUsers`);
         const userData = await response.json();
         
       
@@ -79,7 +79,7 @@ const handleSendMessage = async () => {
     }
 
     // Send message to backend
-    const response = await fetch(`http://localhost:5000/message/send`, {
+    const response = await fetch(`${BACKEND_URL}/message/send`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -157,7 +157,7 @@ const handleSelectChat = async (userId) => {
     
     console.log('Current user ID:', currentUserId, 'Selected user ID:', userId);
     
-    const response = await fetch(`http://localhost:5000/message/get-convo`, {
+    const response = await fetch(`${BACKEND_URL}/message/get-convo`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
