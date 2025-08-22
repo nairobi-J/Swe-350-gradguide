@@ -136,5 +136,26 @@ const getEventQuestions =  async (req, res) => {
 
   }
 
+  deleteQuestion = async(req, res) => {
+      const { questionId } = req.params;
 
-  module.exports = {addQuestion, getEventQuestions, updateQuestionStatus, addReply, getReplies }
+      try {
+          const result = await pool.query(
+              `DELETE FROM event_query WHERE id = $1 RETURNING *`,
+              [questionId]
+          );
+
+          if(result.rowCount === 0){
+              return res.status(404).json({error: 'Question not found'})
+          }
+
+          res.json({message: 'Question deleted successfully', deletedQuestion: result.rows[0]})
+
+      } catch (error) {
+          console.error('Error deleting question:', error);
+          res.status(500).json({ error: 'Failed to delete question' });
+      }
+  }
+
+
+  module.exports = {addQuestion, getEventQuestions, updateQuestionStatus, addReply, getReplies, deleteQuestion }

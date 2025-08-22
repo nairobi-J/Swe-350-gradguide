@@ -11,4 +11,6 @@ router.post('/reply', eventQueryController.addReply)
 router.get('/query',eventQueryController.getEventQuestions)
 router.get('/reply',eventQueryController.getReplies)
 
+router.delete('/query/:questionId', authenticate, eventQueryController.deleteQuestion)
+
 module.exports = router

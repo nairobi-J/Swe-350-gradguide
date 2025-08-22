@@ -47,4 +47,34 @@ const submitEventFormResponse = async(req, res)=>{
     }
 }
 
-module.exports = {getEventForm, submitEventFormResponse}
+const getEventFormResponse = async(req, res)=>{
+    const {id} = req.query
+
+    try{
+        const result = await pool.query(
+            `select * from event_registration_response where event_id = $1`, [id]
+        )
+
+        res.status(201).json(result.rows)
+    }
+    catch(error){
+         res.status(501).json({error: error.message});
+    }
+};
+
+const getEventFormResponseByUserId = async(req, res)=>{
+    const {userId} = req.query
+
+    try{
+        const result = await pool.query(
+            `select * from event_registration_response where user_id = $1`, [userId]
+        )
+
+        res.status(201).json(result.rows)
+    }
+    catch(error){
+         res.status(501).json({error: error.message});
+    }
+};
+
+module.exports = {getEventForm, submitEventFormResponse, getEventFormResponse, getEventFormResponseByUserId}

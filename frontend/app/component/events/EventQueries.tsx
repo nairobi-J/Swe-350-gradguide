@@ -9,6 +9,8 @@ interface EventQueriesProps {
   onAddQuery?: (questionText: string) => void;
   onAddReply?: (queryId: number, replyText: string) => void;
   currentUserId?: number;
+  isAuthenticated?: boolean;
+  getUserNameById?: (userId: number) => Promise<string>;
 }
 
 const EventQueries: React.FC<EventQueriesProps> = ({
@@ -16,11 +18,14 @@ const EventQueries: React.FC<EventQueriesProps> = ({
   eventId,
   onAddQuery,
   onAddReply,
-  currentUserId
+  currentUserId,
+  isAuthenticated = false,
+  getUserNameById
 }) => {
   const [newQuery, setNewQuery] = useState('');
   const [replyTexts, setReplyTexts] = useState<{ [key: number]: string }>({});
   const [showReplyForm, setShowReplyForm] = useState<{ [key: number]: boolean }>({});
+  const [userNames, setUserNames] = useState<{ [key: number]: string }>({});
 
   const handleSubmitQuery = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +52,51 @@ const EventQueries: React.FC<EventQueriesProps> = ({
     return new Date(dateString).toLocaleString();
   };
 
+  // Function to get and cache username
+  const getDisplayName = async (userId: number): Promise<string> => {
+    if (userNames[userId]) {
+      return userNames[userId];
+    }
+
+    if (getUserNameById) {
+      try {
+        const name = await getUserNameById(userId);
+        setUserNames(prev => ({ ...prev, [userId]: name }));
+        return name;
+      } catch (error) {
+        console.error('Error fetching username:', error);
+        const fallback = `User ${userId}`;
+        setUserNames(prev => ({ ...prev, [userId]: fallback }));
+        return fallback;
+      }
+    }
+    
+    const fallback = `User ${userId}`;
+    setUserNames(prev => ({ ...prev, [userId]: fallback }));
+    return fallback;
+  };
+
+  // Load usernames when queries change
+  React.useEffect(() => {
+    const loadUserNames = async () => {
+      const userIds = new Set<number>();
+      queries.forEach(query => {
+        userIds.add(query.user_id);
+        query.replies.forEach(reply => userIds.add(reply.user_id));
+      });
+
+      for (const userId of userIds) {
+        if (!userNames[userId]) {
+          await getDisplayName(userId);
+        }
+      }
+    };
+
+    if (queries.length > 0) {
+      loadUserNames();
+    }
+  }, [queries, getUserNameById]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -59,7 +109,7 @@ const EventQueries: React.FC<EventQueriesProps> = ({
       </div>
 
       {/* Add New Query Form */}
-      {onAddQuery && (
+      {isAuthenticated && onAddQuery ? (
         <form onSubmit={handleSubmitQuery} className="bg-gray-50 p-4 rounded-lg">
           <label htmlFor="newQuery" className="block text-sm font-medium text-gray-700 mb-2">
             Ask a Question
@@ -83,7 +133,13 @@ const EventQueries: React.FC<EventQueriesProps> = ({
             </button>
           </div>
         </form>
-      )}
+      ) : !isAuthenticated ? (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-yellow-700 text-center">
+            <span className="font-medium">Please log in to ask questions.</span>
+          </p>
+        </div>
+      ) : null}
 
       {/* Queries List */}
       <div className="space-y-4">
@@ -99,7 +155,9 @@ const EventQueries: React.FC<EventQueriesProps> = ({
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-900">User {query.user_id}</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {userNames[query.user_id] || `User ${query.user_id}`}
+                  </span>
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                     query.status === 'open' 
                       ? 'bg-green-100 text-green-800' 
@@ -126,7 +184,9 @@ const EventQueries: React.FC<EventQueriesProps> = ({
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <Reply className="w-3 h-3 text-gray-400" />
-                            <span className="text-xs font-medium text-gray-700">User {reply.user_id}</span>
+                            <span className="text-xs font-medium text-gray-700">
+                              {userNames[reply.user_id] || `User ${reply.user_id}`}
+                            </span>
                           </div>
                           <span className="text-xs text-gray-500">
                             {formatDate(reply.created_at)}
@@ -141,39 +201,43 @@ const EventQueries: React.FC<EventQueriesProps> = ({
 
               {/* Reply Form */}
               <div className="border-t border-gray-100 pt-3">
-                {!showReplyForm[query.id] ? (
-                  <button
-                    onClick={() => toggleReplyForm(query.id)}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
-                  >
-                    <Reply className="w-3 h-3" />
-                    Reply
-                  </button>
-                ) : (
-                  <div className="space-y-3">
-                    <textarea
-                      value={replyTexts[query.id] || ''}
-                      onChange={(e) => setReplyTexts(prev => ({ ...prev, [query.id]: e.target.value }))}
-                      placeholder="Type your reply..."
-                      className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                      rows={2}
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleSubmitReply(query.id)}
-                        disabled={!replyTexts[query.id]?.trim()}
-                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Post Reply
-                      </button>
-                      <button
-                        onClick={() => toggleReplyForm(query.id)}
-                        className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-300"
-                      >
-                        Cancel
-                      </button>
+                {isAuthenticated ? (
+                  !showReplyForm[query.id] ? (
+                    <button
+                      onClick={() => toggleReplyForm(query.id)}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                    >
+                      <Reply className="w-3 h-3" />
+                      Reply
+                    </button>
+                  ) : (
+                    <div className="space-y-3">
+                      <textarea
+                        value={replyTexts[query.id] || ''}
+                        onChange={(e) => setReplyTexts(prev => ({ ...prev, [query.id]: e.target.value }))}
+                        placeholder="Type your reply..."
+                        className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                        rows={2}
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleSubmitReply(query.id)}
+                          disabled={!replyTexts[query.id]?.trim()}
+                          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Post Reply
+                        </button>
+                        <button
+                          onClick={() => toggleReplyForm(query.id)}
+                          className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-300"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )
+                ) : (
+                  <p className="text-gray-500 text-sm italic">Please log in to reply to this question.</p>
                 )}
               </div>
             </div>
