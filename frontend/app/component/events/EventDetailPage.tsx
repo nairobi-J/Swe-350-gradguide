@@ -83,9 +83,58 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
     return null;
   };
 
-  const[userId, setUserId] = useState<string | null>(getLoggedInUserId());
+  
+
+  const [userId, setUserId] = useState<string | null>(getLoggedInUserId());
+  const isAuthenticated = !!userId;
+
+  const getLoggedInUserName = async () => {
+    if (!userId) return null;
+    
+    try {
+      const response = await axios.get(`${AZURE_BACKEND_URL}/auth/getUserById/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.data) {
+        return response.data.first_name;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching user name:', error);
+      return null;
+    }
+  };
+
+  // Function to get any user's name by ID
+  const getUserNameById = async (userIdToFetch: number) => {
+    try {
+      const response = await axios.get(`${AZURE_BACKEND_URL}/auth/getUserById/${userIdToFetch}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.data) {
+        return response.data.first_name;
+      }
+      return `User ${userIdToFetch}`;
+    } catch (error) {
+      console.error('Error fetching user name:', error);
+      return `User ${userIdToFetch}`;
+    }
+  };
+
 
   const handleSendQuery = async (questionText: string) => {
+    // Check if user is authenticated
+    if (!userId) {
+      alert('Please log in to ask a question.');
+      return;
+    }
+
     try {
       const response = await axios.post(`${AZURE_BACKEND_URL}/eventQuery/query`, {
         eventId: event?.id,
@@ -102,10 +151,17 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
       await fetchEventQueryDetails();
     } catch (error) {
       console.error('Error posting query:', error);
+      alert('Failed to post question. Please try again.');
     }
   };
 
   const handleSendReply = async (queryId: number, replyText: string) => {
+    // Check if user is authenticated
+    if (!userId) {
+      alert('Please log in to reply.');
+      return;
+    }
+
     try {
       await axios.post(`${AZURE_BACKEND_URL}/eventQuery/reply`, {
         queryId: queryId,
@@ -122,6 +178,7 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
       await fetchEventQueryDetails();
     } catch (error) {
       console.error('Error posting reply:', error);
+      alert('Failed to post reply. Please try again.');
     }
   };
 
@@ -214,7 +271,9 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
               eventId={Number(event.id)}
               onAddQuery={handleSendQuery}
               onAddReply={handleSendReply}
-              currentUserId={Number(currentUserId)}
+              currentUserId={Number(userId) || 0}
+              isAuthenticated={isAuthenticated}
+              getUserNameById={getUserNameById}
             />
           </div>
         </div>
