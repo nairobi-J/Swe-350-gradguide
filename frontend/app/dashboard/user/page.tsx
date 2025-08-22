@@ -146,7 +146,7 @@ const generateGuidelines = async () => {
                     </div>
                     <div>
                       <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
-                        Career Path <span className="text-indigo-600">Generator</span>
+                       Road Map <span className="text-indigo-600">Generator</span>
                       </h1>
                       <p className="text-slate-600 text-lg mt-1">
                         AI-powered personalized career guidance

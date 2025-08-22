@@ -2,28 +2,7 @@
 import { TrendingUp, Award, BookOpen, ArrowRight, ChevronRight, DollarSign } from 'lucide-react';
 
 export default function CareerPathsPage() {
-  const careerPaths = [
-    {
-      title: "Data Science & AI",
-      description: "From data analysis to advanced AI research",
-      growth: "+35%",
-      demand: "Very High",
-      salary: "$90k - $150k",
-      skills: ["Python", "Machine Learning", "Statistics", "Deep Learning"],
-      levels: ["Junior Data Analyst", "Data Scientist", "Senior Data Scientist", "AI Research Lead"],
-      matchScore: 95,
-    },
-    {
-      title: "Full Stack Development",
-      description: "Master both frontend and backend development",
-      growth: "+25%",
-      demand: "High",
-      salary: "$80k - $140k",
-      skills: ["JavaScript", "React", "Node.js", "SQL"],
-      levels: ["Junior Developer", "Full Stack Developer", "Senior Developer", "Tech Lead"],
-      matchScore: 92,
-    },
-  ];
+ 
 
   return (
     <div className="space-y-6">

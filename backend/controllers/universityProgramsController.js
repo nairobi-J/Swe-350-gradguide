@@ -1,7 +1,7 @@
 const pool = require('../db'); // Adjust path if needed
 //console.log('Pool in controller:', pool && typeof pool.query);
 const getAllUniversityPrograms = async (req, res) => {
-    const { page=1, limit=20, country } = req.query;
+    const { page=1, limit=100, country } = req.query;
     const offset = (page - 1) * limit;
     
     try {
