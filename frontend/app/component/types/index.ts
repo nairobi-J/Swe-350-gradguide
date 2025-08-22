@@ -75,3 +75,23 @@ export interface Query {
   createdAt: Date;
   answers: Answer[];
 }
+
+// Event Query and Reply interfaces (based on API response)
+export interface QueryReply {
+  id: number;
+  query_id: number;
+  user_id: number;
+  reply_text: string;
+  created_at: string;
+}
+
+export interface EventQuery {
+  id: number;
+  event_id: number;
+  user_id: number;
+  question_text: string;
+  status: 'open' | 'closed';
+  created_at: string;
+  updated_at: string;
+  replies: QueryReply[];
+}

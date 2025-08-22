@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Info, DollarSign, Calendar, MapPin, Clock, HelpCircle, Send, User, MessageSquare, Banknote } from 'lucide-react';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import axios from 'axios';
 import { comment } from 'postcss';
-import { Event, Feedback, Query, Answer, Registration } from '../types';
+import { Event, Feedback, Query, Answer, Registration, EventQuery } from '../types';
 import RegistrationModal from './RegistrationFormPage';
+import EventQueries from './EventQueries';
 const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
 interface EventDetailPageProps {
   event: Event | null;
@@ -28,82 +29,99 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
   queries,
   currentUserId,
 }) => {
-  const [feedbackComment, setFeedbackComment] = useState('');
-  const [queryText, setQueryText] = useState('');
-  const [answerText, setAnswerText] = useState<{ [key: string]: string }>({});
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<'info' | 'success' | 'error'>('info');
+  const [eventQueries, setEventQueries] = useState<EventQuery[]>([]);
 
-  const handleFinalizeRegistration = (registration: Registration) => {
-    console.log('Registration completed:', registration);
-    setMessage("Registration successful!");
-    setMessageType('success');
-    setIsRegistrationModalOpen(false);
+  //fetch actual event query and reply by eventid
+  const fetchEventQueryDetails = async () => {
+    if (!event) return;
+    
+    try {
+      const response = await axios.get(`${AZURE_BACKEND_URL}/eventQuery/query/?eventId=${event.id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.data) {
+        setEventQueries(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching event queries:', error);
+    }
   };
+
+  useEffect(() => {
+    if (event) {
+      fetchEventQueryDetails();
+    }
+  }, [event]);
 
   if (!event) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner />
       </div>
     );
   }
 
   const eventFeedbacks = feedbacks.filter(f => f.eventId === event.id);
-  const eventQueries = queries.filter(q => q.eventId === event.id);
 
   const handleSendFeedback = async(e: React.FormEvent) => {
     e.preventDefault();
-    if (feedbackComment.trim()) {
-      await axios.post(`${AZURE_BACKEND_URL}/eventFeedback/`, {
-        eventId: 32,
-        userId: 1,
-        comment: feedbackComment
-      },{
-      headers:{
-        "Content-Type": 'application/json',
-      }
-    })
-      addFeedback(event.id, currentUserId, `User ${currentUserId.split('-')[1]}`, feedbackComment);
-      setFeedbackComment('');
+    // This function can be implemented for feedback if needed
+  };
+
+  const getLoggedInUserId = () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.userId;
+    }
+    return null;
+  };
+
+  const[userId, setUserId] = useState<string | null>(getLoggedInUserId());
+
+  const handleSendQuery = async (questionText: string) => {
+    try {
+      const response = await axios.post(`${AZURE_BACKEND_URL}/eventQuery/query`, {
+        eventId: event?.id,
+        userId: userId,
+        queryText: questionText
+      }, {
+        headers: {
+          "Content-Type": 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      // Refresh queries after adding new one
+      await fetchEventQueryDetails();
+    } catch (error) {
+      console.error('Error posting query:', error);
     }
   };
 
-  const handleSendQuery = async(e: React.FormEvent) => {
-    e.preventDefault();
-    if (queryText.trim()) {
-       await axios.post(`${AZURE_BACKEND_URL}/eventQuery/query`, {
-        eventId: 32,
-        userId: 1,
-        queryText: queryText
-      },{
-      headers:{
-        "Content-Type": 'application/json',
-      }
-    })
-      addQuery(event.id, currentUserId, `User ${currentUserId.split('-')[1]}`, queryText);
-      setQueryText('');
-    }
-  };
-
-  const handleAnswerChange = (queryId: string, value: string) => {
-    setAnswerText(prev => ({ ...prev, [queryId]: value }));
-  };
-
-  const handleSubmitAnswer = async(queryId: string) => {
-    if (answerText[queryId] && answerText[queryId].trim()) {
+  const handleSendReply = async (queryId: number, replyText: string) => {
+    try {
       await axios.post(`${AZURE_BACKEND_URL}/eventQuery/reply`, {
-        queryId: 2,
-        userId: 1,
-        replyText: answerText[queryId]
-      },{
-      headers:{
-        "Content-Type": 'application/json',
-      }
-    })
-      addAnswerToQuery(queryId, currentUserId, "Event Host", answerText[queryId]); // Simulating a host reply
-      setAnswerText(prev => ({ ...prev, [queryId]: '' }));
+        queryId: queryId,
+        userId: userId,
+        replyText: replyText
+      }, {
+        headers: {
+          "Content-Type": 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      // Refresh queries after adding reply
+      await fetchEventQueryDetails();
+    } catch (error) {
+      console.error('Error posting reply:', error);
     }
   };
 
@@ -191,86 +209,13 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
         <div className="space-y-6">
           {/* Q&A Section */}
           <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <HelpCircle className="h-5 w-5 mr-2 text-purple-500" /> Questions & Answers
-            </h2>
-            
-            <form onSubmit={handleSendQuery} className="mb-6">
-              <div className="mb-3">
-                <textarea
-                  value={queryText}
-                  onChange={(e) => setQueryText(e.target.value)}
-                  placeholder="Have a question about this event?"
-                  rows={3}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-purple-200 hover:bg-purple-300 text-black font-medium py-2 px-4 rounded-lg shadow transition-colors duration-200"
-              >
-                Ask Question
-              </button>
-            </form>
-
-            {eventQueries.length > 0 ? (
-              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                {eventQueries.map((query) => (
-                  <div key={query.id} className="border-b border-gray-200 pb-4 last:border-0">
-                    <div className="flex items-start mb-2">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-800 font-medium">
-                        {query.username.charAt(0)}
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-gray-900">{query.username}</p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(query.createdAt).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-gray-800 ml-13 mb-3">{query.query}</p>
-
-                    {query.answers.map((answer) => (
-                      <div key={answer.id} className="ml-13 pl-4 border-l-2 border-purple-200 mb-3">
-                        <div className="flex items-start">
-                          <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 text-xs font-medium">
-                            {answer.username.charAt(0)}
-                          </div>
-                          <div className="ml-3">
-                            <p className="text-sm font-medium text-gray-900">{answer.username}</p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(answer.createdAt).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                        <p className="text-gray-700 mt-1">{answer.answer}</p>
-                      </div>
-                    ))}
-
-                    <div className="ml-13 mt-3">
-                      <textarea
-                        value={answerText[query.id] || ''}
-                        onChange={(e) => handleAnswerChange(query.id, e.target.value)}
-                        placeholder="Write your answer..."
-                        rows={2}
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                      />
-                      <button
-                        onClick={() => handleSubmitAnswer(query.id)}
-                        className="mt-2 text-sm bg-blue-200 hover:bg-blue-300 text-white py-1 px-3 rounded-lg transition-colors duration-200 flex items-center gap-1"
-                      >
-                        <Send className="h-3 w-3" /> Post Answer
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <MessageSquare className="h-8 w-8 mx-auto text-gray-400" />
-                <p className="mt-2 text-gray-500">No questions yet. Be the first to ask!</p>
-              </div>
-            )}
+            <EventQueries
+              queries={eventQueries}
+              eventId={Number(event.id)}
+              onAddQuery={handleSendQuery}
+              onAddReply={handleSendReply}
+              currentUserId={Number(currentUserId)}
+            />
           </div>
         </div>
       </div>
@@ -280,9 +225,6 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
         event={event}
         isOpen={isRegistrationModalOpen}
         onClose={() => setIsRegistrationModalOpen(false)}
-        onFinalizeRegistration={handleFinalizeRegistration}
-        setMessage={setMessage}
-        setMessageType={setMessageType}
       />
     </div>
   );
