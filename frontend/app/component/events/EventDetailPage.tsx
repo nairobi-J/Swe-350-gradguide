@@ -118,7 +118,7 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({
       });
 
       if (response.data) {
-        return response.data.first_name;
+        return response.data.first_name + ' ' + response.data.last_name;
       }
       return `User ${userIdToFetch}`;
     } catch (error) {
