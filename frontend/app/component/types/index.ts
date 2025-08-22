@@ -23,7 +23,7 @@ export interface Event {
   location: string;
   description: string;
   type: 'online' | 'offline';
-  is_Paid: boolean;
+  is_paid: boolean;
   price: number;
   creatorId: string;
   registrationFields: RegistrationField[];

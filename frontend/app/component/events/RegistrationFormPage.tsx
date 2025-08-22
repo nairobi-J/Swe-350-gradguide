@@ -97,7 +97,7 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
 
 
 
-   if (event.is_Paid) {
+   if (event.is_paid) {
      try {
       const paymentResponse = await axios.post(
         `${AZURE_BACKEND_URL}/api/payment/init`, // Added /api
@@ -238,7 +238,7 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
   className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
 >
   {isLoading ? 'Processing...' : 
-   (event?.is_Paid ? 'Proceed to Payment' : 'Confirm Registration')}
+   (event?.is_paid ? 'Proceed to Payment' : 'Confirm Registration')}
 </button>
             </div>
           </form>
