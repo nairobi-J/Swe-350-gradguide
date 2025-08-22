@@ -92,41 +92,58 @@ const initPayment = async (req, res) => {
 };
 
 const success = async (req, res) => {
-  try {
-    console.log("Payment success callback data:", req.body);
-    
-    if (!req.body.tran_id) {
-      console.error('Missing transaction ID in success callback');
-      return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=error&reason=missing_tran_id`);
-    }
+    const client = await pool.connect();
 
-    // Verify payment with SSLCommerz validation API if needed
-    
-    const result = await pool.query(
-      `INSERT INTO event_transactions 
-       (transaction_id, status, amount, event_id, user_id) 
-       VALUES ($1, 'success', $2, $3, $4)`,
-      [
-        req.body.tran_id,
-        req.body.amount,
-        req.body.value_a, // Assuming you pass eventId as value_a
-        req.body.value_b  // Assuming you pass userId as value_b
-      ]
-    );
+    try {
+        console.log("Payment success callback data:", req.body);
 
-    console.log('Database insert result:', result.rowCount);
-    
-    if (result.rowCount === 1) {
-      return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=success&tran_id=${req.body.tran_id}`);
-    } else {
-      console.error('Database insert failed');
-      return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=error&reason=db_failed`);
+        const tran_id = req.body.tran_id;
+        const amount = req.body.amount;
+        const eventId = req.body.value_a;
+        const userId = req.body.value_b;
+
+        if (!tran_id || !amount || !eventId || !userId) {
+            console.error('Missing critical data in success callback.');
+            return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=error&reason=missing_data`);
+        }
+        
+        // Start a database transaction
+        await client.query('BEGIN');
+
+        // Step 1: Insert into the transactions table (for tracking payment)
+        const transactionResult = await client.query(
+            `INSERT INTO public.event_transactions 
+                (transaction_id, status, amount, event_id, user_id) 
+            VALUES ($1, 'success', $2, $3, $4)
+            ON CONFLICT (transaction_id) DO NOTHING
+            RETURNING id`,
+            [tran_id, amount, eventId, userId]
+        );
+        
+        // Step 2: Insert into the registration table (to mark user as registered)
+        const registrationResult = await client.query(
+            `INSERT INTO event_registration_response (event_id, user_id, created_at)
+             VALUES ($1, $2, NOW())
+             ON CONFLICT (event_id, user_id) DO NOTHING`, // Assumes a unique constraint on event_id and user_id
+            [eventId, userId]
+        );
+        
+        // Check if both operations were successful (at least one row affected by each)
+        if (transactionResult.rowCount === 1 && registrationResult.rowCount === 1) {
+            await client.query('COMMIT'); // Commit the transaction
+            console.log('Transaction and registration successful.');
+            return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=success&tran_id=${tran_id}`);
+        } else {
+            throw new Error('Database operation failed: Could not insert both transaction and registration records.');
+        }
+
+    } catch (error) {
+        await client.query('ROLLBACK'); // Rollback the transaction on error
+        console.error('Payment success error:', error.message || error);
+        return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=error&reason=exception`);
+    } finally {
+        client.release();
     }
-    
-  } catch (error) {
-    console.error('Payment success error:', error);
-    return res.redirect(`${process.env.FRONTEND_URL}/dashboard/payment?status=error&reason=exception`);
-  }
 };
 
 const fail = async (req, res) => {

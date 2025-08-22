@@ -93,9 +93,12 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
 
   setIsLoading(true);
 
-  try {
-    if (event.is_paid) {
-      // Updated URL with /api prefix
+
+
+
+
+   if (event.is_paid) {
+     try {
       const paymentResponse = await axios.post(
         `${AZURE_BACKEND_URL}/api/payment/init`, // Added /api
         {
@@ -110,23 +113,32 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
       } else {
         throw new Error('No payment URL received');
       }
-    } else {
-      // Free event registration
-      await axios.post(`${AZURE_BACKEND_URL}/api/event/register`, {
-        eventId: event.id,
-        formData
-      });
-      onClose();
-    }
+   
   } catch (error) {
-    console.error("Payment error:", error.response?.data || error.message);
-    alert(
-      error.response?.data?.message || 
-      'Payment initiation failed. Please try again.'
-    );
+    if (axios.isAxiosError(error)) {
+      console.error("Payment error:", error.response?.data || error.message);
+      alert(
+        error.response?.data?.message ||
+        'Payment initiation faileddd. Please try again.'
+      );
+    } 
   } finally {
     setIsLoading(false);
   }
+      // Updated URL with /api prefix
+      
+    } else {
+      // Free event registration
+      await axios.post(`${AZURE_BACKEND_URL}/event/register-event`, {
+        eventId: event.id,
+        formData
+      });
+      alert("Registration Successful")
+      onClose();
+      setIsLoading(false);
+    }
+
+ 
 }, [event, formData, validateForm, onClose]);
   if (!isOpen) return null;
 
