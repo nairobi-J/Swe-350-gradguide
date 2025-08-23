@@ -1,53 +1,101 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); 
 const pool = require('../db'); // Your database connection pool
+const { 
+  validateEmail, 
+  generateVerificationCode, 
+  sendVerificationEmail, 
+  storeVerificationCode, 
+  verifyCode 
+} = require('../services/emailService');
 
 const register = async (req, res) => {
-    const { first_name, last_name, email, password, phone, dob, gender } = req.body;
-    console.log(`Attempting registration for email: ${email}`); // Improved logging
+    const { first_name, last_name, email, password, phone, dob, gender, verification_code } = req.body;
+    console.log(`Attempting registration for email: ${email}`);
 
     // 1. Basic validation for required fields
     if (!first_name || !last_name || !email || !password) {
-        // Return a 400 Bad Request if essential fields are missing
         return res.status(400).json({ message: 'Missing required fields: first name, last name, email, and password are required.' });
     }
 
-    try {
-        // 2. Hash the password before storing it
-        const hashpass = await bcrypt.hash(password, 10);
-
-        // 3. Attempt to insert the new user into the database
-        // It's good practice to add `RETURNING *` or `RETURNING id` if you need the inserted row's data
-        const result = await pool.query(
-            `INSERT INTO users 
-             (first_name, last_name, email, password, phone, dob, gender, agree_terms) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-             RETURNING id, email`, // Returning id and email of the newly created user
-            [first_name, last_name, email, hashpass, phone, dob, gender, false]
-        );
-
-        // 4. If insertion is successful, return a 201 Created status with a success message
-        // You can include some basic user info like ID or email if useful for the frontend
-        res.status(201).json({
-            message: 'Registration successful!',
-            user: {
-                id: result.rows[0].id,
-                email: result.rows[0].email
-            }
-        });
-
-    } catch (error) {
-        console.error('Registration failed:', error); // Log the full error for server-side debugging
-
-        // 5. Handle duplicate email error (PostgreSQL unique violation)
-        if (error.code === '23505') {
-            // Send a 409 Conflict status for duplicate resources
-            return res.status(409).json({ message: 'Email already exists. Please use a different email address.' });
+    // 2. If verification_code is provided, this is the final registration step
+    if (verification_code) {
+        // Verify the code
+        const verificationResult = verifyCode(email, verification_code);
+        if (!verificationResult.valid) {
+            return res.status(400).json({ message: verificationResult.message });
         }
+
+        try {
+            // Hash the password before storing it
+            const hashpass = await bcrypt.hash(password, 10);
+
+            // Insert the verified user into the database
+            const result = await pool.query(
+                `INSERT INTO users 
+                 (first_name, last_name, email, password, phone, dob, gender, agree_terms) 
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+                 RETURNING id, email`,
+                [first_name, last_name, email, hashpass, phone, dob, gender, false]
+            );
+
+            res.status(201).json({
+                message: 'Registration successful! Your email has been verified.',
+                user: {
+                    id: result.rows[0].id,
+                    email: result.rows[0].email
+                }
+            });
+
+        } catch (error) {
+            console.error('Registration failed:', error);
+
+            if (error.code === '23505') {
+                return res.status(409).json({ message: 'Email already exists. Please use a different email address.' });
+            }
+            
+            res.status(500).json({ message: 'Registration failed due to a server error. Please try again later.' });
+        }
+    } else {
+        // This is the first step - validate email and send verification code
         
-        // 6. Handle any other unexpected database errors
-        // Send a 500 Internal Server Error for unhandled server-side issues
-        res.status(500).json({ message: 'Registration failed due to a server error. Please try again later.' });
+        // Validate email format and authenticity
+        const emailValidation = await validateEmail(email);
+        if (!emailValidation.valid) {
+            return res.status(400).json({ message: emailValidation.message });
+        }
+
+        // Check if email already exists in database
+        try {
+            const existingUser = await pool.query(
+                'SELECT id FROM users WHERE email = $1',
+                [email]
+            );
+
+            if (existingUser.rows.length > 0) {
+                return res.status(409).json({ message: 'Email already exists. Please use a different email address.' });
+            }
+
+            // Generate and send verification code
+            const code = generateVerificationCode();
+            const emailSent = await sendVerificationEmail(email, code);
+
+            if (!emailSent) {
+                return res.status(500).json({ message: 'Failed to send verification email. Please try again.' });
+            }
+
+            // Store the verification code
+            storeVerificationCode(email, code);
+
+            res.status(200).json({
+                message: 'Verification code sent to your email. Please check your inbox and enter the code to complete registration.',
+                step: 'verification_required'
+            });
+
+        } catch (error) {
+            console.error('Email validation failed:', error);
+            res.status(500).json({ message: 'Failed to validate email. Please try again later.' });
+        }
     }
 };
 
@@ -146,6 +194,82 @@ const getUserById = async (req, res) => {
     }
 };
 
+// Resend verification code endpoint
+const resendVerificationCode = async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required.' });
+    }
+
+    try {
+        // Check if email already exists in database
+        const existingUser = await pool.query(
+            'SELECT id FROM users WHERE email = $1',
+            [email]
+        );
+
+        if (existingUser.rows.length > 0) {
+            return res.status(409).json({ message: 'Email already registered. Please try logging in instead.' });
+        }
+
+        // Validate email format and authenticity
+        const emailValidation = await validateEmail(email);
+        if (!emailValidation.valid) {
+            return res.status(400).json({ message: emailValidation.message });
+        }
+
+        // Generate and send new verification code
+        const code = generateVerificationCode();
+        const emailSent = await sendVerificationEmail(email, code);
+
+        if (!emailSent) {
+            return res.status(500).json({ message: 'Failed to send verification email. Please try again.' });
+        }
+
+        // Store the new verification code (overwrites any existing code)
+        storeVerificationCode(email, code);
+
+        res.status(200).json({
+            message: 'New verification code sent to your email. Please check your inbox.',
+        });
+
+    } catch (error) {
+        console.error('Resend verification failed:', error);
+        res.status(500).json({ message: 'Failed to resend verification code. Please try again later.' });
+    }
+};
+
+// Verify email code endpoint (optional - can also be handled in register)
+const verifyEmailCode = async (req, res) => {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+        return res.status(400).json({ message: 'Email and verification code are required.' });
+    }
+
+    const verificationResult = verifyCode(email, code);
+    
+    if (verificationResult.valid) {
+        res.status(200).json({ 
+            message: verificationResult.message,
+            verified: true 
+        });
+    } else {
+        res.status(400).json({ 
+            message: verificationResult.message,
+            verified: false 
+        });
+    }
+};
+
 // You would typically export this function to be used in your Express routes
 // module.exports = { login, register }; // If you have both in one file
-module.exports = { register, login, getUsers, getUserById };
+module.exports = { 
+    register, 
+    login, 
+    getUsers, 
+    getUserById, 
+    resendVerificationCode, 
+    verifyEmailCode 
+};
