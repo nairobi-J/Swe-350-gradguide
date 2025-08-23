@@ -263,6 +263,30 @@ const verifyEmailCode = async (req, res) => {
     }
 };
 
+const deleteUserByEmail = async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required.' });
+    }
+
+    try {
+        const result = await pool.query(
+            'DELETE FROM users WHERE email = $1 RETURNING id',
+            [email]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        res.status(200).json({ message: 'User deleted successfully.', userId: result.rows[0].id });
+    } catch (error) {
+        console.error('Deleting user failed:', error);
+        res.status(500).json({ message: 'Failed to delete user due to a server error.' });
+    }
+};  
+
 // You would typically export this function to be used in your Express routes
 // module.exports = { login, register }; // If you have both in one file
 module.exports = { 
@@ -271,5 +295,6 @@ module.exports = {
     getUsers, 
     getUserById, 
     resendVerificationCode, 
-    verifyEmailCode 
+    verifyEmailCode ,
+    deleteUserByEmail
 };
