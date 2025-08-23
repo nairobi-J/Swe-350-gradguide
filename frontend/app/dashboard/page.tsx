@@ -82,7 +82,7 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
         gender: formData.gender
       };
 
-      const res = await fetch(`${AZURE_BACKEND_URL}/auth/send-verification`, {
+      const res = await fetch(`${AZURE_BACKEND_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -92,17 +92,29 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
         throw new Error(data.message || 'Failed to send verification code');
       }
 
-      // Store email for verification and show OTP form
-      setOtpData(prev => ({
-        ...prev,
-        email: formData.email,
-        tempUserId: data.tempUserId
-      }));
-      setShowOtpVerification(true);
-      setMessage({
-        text: 'Verification code sent to your email. Please check your inbox.',
-        type: 'success'
-      });
+      // Check if verification is required
+      if (data.step === 'verification_required') {
+        // Store email for verification and show OTP form
+        setOtpData(prev => ({
+          ...prev,
+          email: formData.email,
+          tempUserId: data.tempUserId
+        }));
+        setShowOtpVerification(true);
+        setMessage({
+          text: 'Verification code sent to your email. Please check your inbox.',
+          type: 'success'
+        });
+      } else {
+        // If registration completed without verification (fallback)
+        setMessage({
+          text: data.message || 'Registration successful!',
+          type: 'success'
+        });
+        setTimeout(() => {
+          setIsSignIn(true);
+        }, 2000);
+      }
     } catch (err: any) {
       setMessage({ text: err.message || 'An error occurred during registration.', type: 'error' });
     } finally {
@@ -157,11 +169,17 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
 
     try {
       const payload = {
-        email: otpData.email,
-        otp: otpData.otp
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        dob: formData.dob,
+        gender: formData.gender,
+        verification_code: otpData.otp
       };
 
-      const res = await fetch(`${AZURE_BACKEND_URL}/auth/verify-email`, {
+      const res = await fetch(`${AZURE_BACKEND_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -210,10 +228,20 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
     setMessage({ text: 'Resending verification code...', type: 'info' });
 
     try {
-      const res = await fetch(`${AZURE_BACKEND_URL}/auth/resend-verification`, {
+      const payload = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        dob: formData.dob,
+        gender: formData.gender
+      };
+
+      const res = await fetch(`${AZURE_BACKEND_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: otpData.email }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
