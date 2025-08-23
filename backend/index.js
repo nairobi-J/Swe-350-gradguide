@@ -35,6 +35,7 @@ const eventQueryRoutes = require('./routes/eventQueryRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const guidelines = require('./routes/guidelines');
 const paymentRoutes = require('./routes/paymentRoutes');
+const messageRoutes = require('./routes/messageRoutes')
 
 
 
@@ -51,6 +52,8 @@ app.use('/eventQuery', eventQueryRoutes);
 app.use('/review', reviewRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/generate', guidelines);
+
+app.use('/message', messageRoutes);
 
 
 // In your Express backend

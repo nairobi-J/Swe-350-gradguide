@@ -97,37 +97,10 @@ const [totalPrograms, setTotalPrograms] = useState<number>(0);
 
     fetchUniversityPrograms();
   }, [currentPage, itemsPerPage]);
-  // Effect to fetch Universities initially
-  // useEffect(() => {
-  //   const fetchUniversities = async () => {
-  //     try {
-  //       const response = await fetch('http://localhost:5000/uni/get?limit=20');
+  
 
-  //       if (!response.ok) {
-  //         throw new Error(`HTTP error! status: ${response.status}`);
-  //       }
-
-  //       const result = await response.json();
-
-  //       // Ensure we're setting the actual array to 'Universities' state
-  //       setUniversities(result.data);
-  //       setFilteredUniversities(result.data); // Initialize filtered Universities with all fetched Universities
-
-  //       console.log("Full API Response Object:", result);
-  //       console.log("Array being set to 'Universities' state:", result.data);
-
-  //     } catch (err) {
-  //       console.error("Failed to fetch Universities:", err);
-  //       setError(err.message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchUniversities();
-  // }, []); // Runs only once on component mount
-
-  // Effect to filter Universities whenever searchTerm or Universities changes
+  
+ 
   useEffect(() => {
     if (!programs.length) return; // Don't filter if Universities aren't loaded yet
 
