@@ -167,6 +167,25 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
     setLoading(true);
     setMessage({ text: 'Verifying code...', type: 'info' });
 
+    // Debug logging
+    console.log('OTP Verification Debug:');
+    console.log('formData:', formData);
+    console.log('otpData:', otpData);
+
+    // Validate OTP input
+    if (!otpData.otp || otpData.otp.trim().length !== 6) {
+      setMessage({ text: 'Please enter a valid 6-digit verification code.', type: 'error' });
+      setLoading(false);
+      return;
+    }
+
+    // Validate email
+    if (!formData.email || !otpData.email) {
+      setMessage({ text: 'Email is missing. Please try registering again.', type: 'error' });
+      setLoading(false);
+      return;
+    }
+
     try {
       const payload = {
         first_name: formData.firstName,
@@ -176,8 +195,13 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
         phone: formData.phone,
         dob: formData.dob,
         gender: formData.gender,
-        verification_code: otpData.otp
+        verification_code: otpData.otp.trim()
       };
+
+      console.log('Sending verification payload:', { 
+        ...payload, 
+        password: '[HIDDEN]' // Don't log password
+      });
 
       const res = await fetch(`${AZURE_BACKEND_URL}/auth/register`, {
         method: 'POST',
@@ -185,6 +209,9 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
         body: JSON.stringify(payload),
       });
       const data = await res.json();
+      
+      console.log('Verification response:', data);
+      
       if (!res.ok) {
         throw new Error(data.message || 'Verification failed');
       }

@@ -12,16 +12,29 @@ const {
 const register = async (req, res) => {
     const { first_name, last_name, email, password, phone, dob, gender, verification_code } = req.body;
     console.log(`Attempting registration for email: ${email}`);
+    console.log('Request body:', { 
+        first_name, 
+        last_name, 
+        email, 
+        password: password ? '[PROVIDED]' : '[MISSING]', 
+        phone, 
+        dob, 
+        gender, 
+        verification_code 
+    });
 
     // 1. Basic validation for required fields
     if (!first_name || !last_name || !email || !password) {
+        console.log('Missing required fields validation failed');
         return res.status(400).json({ message: 'Missing required fields: first name, last name, email, and password are required.' });
     }
 
     // 2. If verification_code is provided, this is the final registration step
     if (verification_code) {
+        console.log('Processing verification step with code:', verification_code);
         // Verify the code
         const verificationResult = verifyCode(email, verification_code);
+        console.log('Verification result:', verificationResult);
         if (!verificationResult.valid) {
             return res.status(400).json({ message: verificationResult.message });
         }
