@@ -6,6 +6,12 @@ import { useState } from 'react';
 const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
 export default function AuthPage() { // Renamed to AuthPage for broader scope
   const [isSignIn, setIsSignIn] = useState(true); // State to toggle between Sign In and Sign Up
+  const [showOtpVerification, setShowOtpVerification] = useState(false); // New state for OTP verification
+  const [otpData, setOtpData] = useState({
+    email: '',
+    otp: '',
+    tempUserId: null
+  });
  
   const [formData, setFormData] = useState({
     firstName: '',
@@ -28,9 +34,14 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
   const [loading, setLoading] = useState(false);
 
   // Handle changes for both forms
-  const handleChange = (e) => {
+  const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
-    if (isSignIn) {
+    if (showOtpVerification) {
+      setOtpData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    } else if (isSignIn) {
       setLoginData(prev => ({
         ...prev,
         [name]: value
@@ -43,10 +54,10 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
     }
   };
 
-  const handleSignUpSubmit = async (e) => {
+  const handleSignUpSubmit = async (e: any) => {
     e.preventDefault();
     setLoading(true);
-    setMessage({ text: 'Submitting...', type: 'info' });
+    setMessage({ text: 'Sending verification code...', type: 'info' });
 
     // Basic validation for signup
     if (formData.password !== formData.confirmPassword) {
@@ -71,30 +82,35 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
         gender: formData.gender
       };
 
-      const res = await fetch(`${AZURE_BACKEND_URL}/auth/register`, {
+      const res = await fetch(`${AZURE_BACKEND_URL}/auth/send-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Registration failed');
+        throw new Error(data.message || 'Failed to send verification code');
       }
 
+      // Store email for verification and show OTP form
+      setOtpData(prev => ({
+        ...prev,
+        email: formData.email,
+        tempUserId: data.tempUserId
+      }));
+      setShowOtpVerification(true);
       setMessage({
-        text: data.message || 'Registration successful!',
+        text: 'Verification code sent to your email. Please check your inbox.',
         type: 'success'
       });
-      router.push('/dashboard/home'); // Redirect to dashboard after successful registration
-      // Optionally clear form data or redirect
-    } catch (err) {
+    } catch (err: any) {
       setMessage({ text: err.message || 'An error occurred during registration.', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSignInSubmit = async (e) => {
+  const handleSignInSubmit = async (e: any) => {
     e.preventDefault();
     setLoading(true);
     setMessage({ text: 'Logging in...', type: 'info' });
@@ -127,8 +143,89 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
 
       router.push('/dashboard/home'); // Redirect to dashboard
       console.log('User logged in:', data.user);
-    } catch (err) {
+    } catch (err: any) {
       setMessage({ text: err.message || 'An error occurred during login.', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpVerification = async (e: any) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage({ text: 'Verifying code...', type: 'info' });
+
+    try {
+      const payload = {
+        email: otpData.email,
+        otp: otpData.otp
+      };
+
+      const res = await fetch(`${AZURE_BACKEND_URL}/auth/verify-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Verification failed');
+      }
+
+      setMessage({
+        text: 'Email verified successfully! Registration complete.',
+        type: 'success'
+      });
+
+      // Reset states and redirect to login
+      setTimeout(() => {
+        setShowOtpVerification(false);
+        setIsSignIn(true);
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          phone: '',
+          dob: '',
+          gender: '',
+          agreeTerms: false
+        });
+        setOtpData({
+          email: '',
+          otp: '',
+          tempUserId: null
+        });
+        setMessage({ text: 'Please sign in with your verified account.', type: 'info' });
+      }, 2000);
+    } catch (err: any) {
+      setMessage({ text: err.message || 'Verification failed. Please try again.', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setLoading(true);
+    setMessage({ text: 'Resending verification code...', type: 'info' });
+
+    try {
+      const res = await fetch(`${AZURE_BACKEND_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: otpData.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to resend code');
+      }
+
+      setMessage({
+        text: 'Verification code resent to your email.',
+        type: 'success'
+      });
+    } catch (err: any) {
+      setMessage({ text: err.message || 'Failed to resend code.', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -138,12 +235,92 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 text-black">
       <div className="w-full max-w-md bg-white rounded-lg shadow-md overflow-hidden">
         <div className="bg-blue-600 p-6 text-white">
-          <h1 className="text-2xl font-bold">{isSignIn ? 'Sign In' : 'Create Account'}</h1>
-          <p className="text-blue-100">{isSignIn ? 'Welcome back!' : 'Join our community today'}</p>
+          <h1 className="text-2xl font-bold">
+            {showOtpVerification ? 'Verify Your Email' : (isSignIn ? 'Sign In' : 'Create Account')}
+          </h1>
+          <p className="text-blue-100">
+            {showOtpVerification 
+              ? 'Enter the verification code sent to your email' 
+              : (isSignIn ? 'Welcome back!' : 'Join our community today')
+            }
+          </p>
         </div>
 
         {/* Conditional Rendering */}
-        {isSignIn ? (
+        {showOtpVerification ? (
+          // OTP Verification Form
+          <form onSubmit={handleOtpVerification} className="p-6 space-y-4">
+            <div className="text-center mb-4">
+              <p className="text-sm text-gray-600">
+                We sent a verification code to
+              </p>
+              <p className="font-medium text-gray-900">{otpData.email}</p>
+            </div>
+
+            {/* OTP Input */}
+            <div>
+              <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-1">
+                Verification Code
+              </label>
+              <input
+                type="text"
+                id="otp"
+                name="otp"
+                value={otpData.otp}
+                onChange={handleChange}
+                placeholder="Enter 6-digit code"
+                maxLength={6}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg tracking-widest"
+                required
+              />
+            </div>
+
+            {/* Verify Button */}
+            <button
+              type="submit"
+              disabled={loading || otpData.otp.length !== 6}
+              className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${loading || otpData.otp.length !== 6 ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Verifying...
+                </span>
+              ) : (
+                'Verify Email'
+              )}
+            </button>
+
+            {/* Resend Code */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={loading}
+                className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
+              >
+                Didn't receive code? Resend
+              </button>
+            </div>
+
+            {/* Back to Sign Up */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowOtpVerification(false);
+                  setOtpData({ email: '', otp: '', tempUserId: null });
+                }}
+                className="text-sm text-gray-600 hover:text-gray-700"
+              >
+                ← Back to registration
+              </button>
+            </div>
+          </form>
+        ) : isSignIn ? (
           // Sign In Form
           <form onSubmit={handleSignInSubmit} className="p-6 space-y-4">
             {/* Email */}
@@ -376,38 +553,45 @@ export default function AuthPage() { // Renamed to AuthPage for broader scope
 
         {/* Message Display */}
         {message.text && (
-          <div className={`p-4 text-center ${message.type === 'success' ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'}`}>
+          <div className={`p-4 text-center ${
+            message.type === 'success' ? 'text-green-700 bg-green-100' : 
+            message.type === 'info' ? 'text-blue-700 bg-blue-100' : 
+            'text-red-700 bg-red-100'
+          }`}>
             {message.text}
           </div>
         )}
 
-        <div className="bg-gray-50 px-6 py-4 text-center">
-          <p className="text-sm text-gray-600">
-            {isSignIn ? (
-              <>
-                Don't have an account?{' '}
-                <a
-                  href="#"
-                  onClick={() => setIsSignIn(false)} // Toggle to Sign Up
-                  className="font-medium text-blue-600 hover:text-blue-500"
-                >
-                  Sign up
-                </a>
-              </>
-            ) : (
-              <>
-                Already have an account?{' '}
-                <a
-                  href="#"
-                  onClick={() => setIsSignIn(true)} // Toggle to Sign In
-                  className="font-medium text-blue-600 hover:text-blue-500"
-                >
-                  Sign in
-                </a>
-              </>
-            )}
-          </p>
-        </div>
+        {/* Toggle between Sign In/Sign Up - Hidden during OTP verification */}
+        {!showOtpVerification && (
+          <div className="bg-gray-50 px-6 py-4 text-center">
+            <p className="text-sm text-gray-600">
+              {isSignIn ? (
+                <>
+                  Don't have an account?{' '}
+                  <a
+                    href="#"
+                    onClick={() => setIsSignIn(false)} // Toggle to Sign Up
+                    className="font-medium text-blue-600 hover:text-blue-500"
+                  >
+                    Sign up
+                  </a>
+                </>
+              ) : (
+                <>
+                  Already have an account?{' '}
+                  <a
+                    href="#"
+                    onClick={() => setIsSignIn(true)} // Toggle to Sign In
+                    className="font-medium text-blue-600 hover:text-blue-500"
+                  >
+                    Sign in
+                  </a>
+                </>
+              )}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

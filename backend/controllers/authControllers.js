@@ -287,6 +287,61 @@ const deleteUserByEmail = async (req, res) => {
     }
 };  
 
+const sendVerificationCode = async (req, res) => {
+    const { first_name, last_name, email, password, phone, dob, gender } = req.body;
+    console.log(`Sending verification code for email: ${email}`);
+
+    // 1. Basic validation for required fields
+    if (!first_name || !last_name || !email || !password) {
+        return res.status(400).json({ message: 'Missing required fields: first name, last name, email, and password are required.' });
+    }
+
+    try {
+        // 2. Validate email format and authenticity
+        const emailValidation = await validateEmail(email);
+        if (!emailValidation.valid) {
+            return res.status(400).json({ message: emailValidation.message });
+        }
+
+        // 3. Check if email already exists in database
+        const existingUser = await pool.query(
+            'SELECT email FROM users WHERE email = $1',
+            [email]
+        );
+
+        if (existingUser.rows.length > 0) {
+            return res.status(409).json({ message: 'Email already exists. Please use a different email address.' });
+        }
+
+        // 4. Generate and store verification code
+        const code = generateVerificationCode();
+        storeVerificationCode(email, code, {
+            first_name,
+            last_name,
+            email,
+            password,
+            phone,
+            dob,
+            gender
+        });
+
+        // 5. Send verification email
+        const emailSent = await sendVerificationEmail(email, code);
+        if (!emailSent) {
+            return res.status(500).json({ message: 'Failed to send verification email. Please try again.' });
+        }
+
+        res.status(200).json({
+            message: 'Verification code sent to your email. Please check your inbox.',
+            email: email
+        });
+
+    } catch (error) {
+        console.error('Send verification failed:', error);
+        res.status(500).json({ message: 'Failed to send verification code due to a server error. Please try again later.' });
+    }
+};
+
 // You would typically export this function to be used in your Express routes
 // module.exports = { login, register }; // If you have both in one file
 module.exports = { 
@@ -296,5 +351,6 @@ module.exports = {
     getUserById, 
     resendVerificationCode, 
     verifyEmailCode ,
-    deleteUserByEmail
+    deleteUserByEmail,
+    sendVerificationCode
 };
