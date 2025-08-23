@@ -38,7 +38,7 @@ const MyRegistrationsPage: React.FC<MyRegistrationsPageProps> = ({ currentUserId
 
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/regForm/eventsByUser/?userId=${userId}`, {
+      const response = await axios.get(`${AZURE_BACKEND_URL}/regForm/eventsByUser/?userId=${userId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
