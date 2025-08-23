@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { Event, RegistrationField } from '../types'; // Only Event and RegistrationField needed
 import axios from 'axios';
+import { u } from 'framer-motion/client';
+import { get } from 'http';
 const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
 interface RegistrationModalProps {
   event: Event | null;
@@ -85,6 +87,14 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({
     return isValid;
   }, [event, fetchedRegistrationFields, formData, setErrors]);
 
+  const getUserIdFromToken = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.userId || null;
+  };
+
   // handleSubmit function
 const handleSubmit = useCallback(async (e: React.FormEvent) => {
   e.preventDefault();
@@ -103,7 +113,7 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
         `${AZURE_BACKEND_URL}/api/payment/init`, // Added /api
         {
           eventId: event.id,
-          userId: 1 // TODO: Replace with actual user ID from auth
+          userId: getUserIdFromToken()
         }
       );
 
@@ -131,6 +141,7 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
       // Free event registration
       await axios.post(`${AZURE_BACKEND_URL}/event/register-event`, {
         eventId: event.id,
+        userId: getUserIdFromToken(),
         formData
       });
       alert("Registration Successful")
