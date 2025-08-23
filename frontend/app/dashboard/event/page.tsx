@@ -181,7 +181,11 @@ export default function EventPageClient() {
               currentUserId={currentUserId}
             />
           )}
-        
+          {currentPath.startsWith('/dashboard/my-registrations')  && (
+            <MyRegistrationsPage
+              currentUserId={currentUserId}
+            />
+          )}
           {!['/dashboard/events', '/dashboard/create-event', '/dashboard/my-registrations'].some(path => currentPath.startsWith(path)) &&
            !currentPath.startsWith('/dashboard/event-details/') &&
            !currentPath.startsWith('/dashboard/register/') && (

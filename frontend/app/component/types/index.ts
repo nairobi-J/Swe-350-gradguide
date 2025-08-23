@@ -95,3 +95,18 @@ export interface EventQuery {
   updated_at: string;
   replies: QueryReply[];
 }
+
+// User Registration Event interface (based on actual API response)
+export interface UserRegistration {
+  id: number;
+  user_id: number | null;
+  name: string;
+  type: 'online' | 'offline';
+  date: string;
+  time: string;
+  location: string;
+  description: string;
+  is_paid: boolean;
+  price: string;
+  created_at: string;
+}

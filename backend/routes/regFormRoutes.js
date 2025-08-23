@@ -10,5 +10,6 @@ router.post('/submit', regFormController.submitEventFormResponse)
 
 router.get('/responses', regFormController.getEventFormResponse)
 router.get('/responseByUser', regFormController.getEventFormResponseByUserId)
+router.get('/eventsByUser', regFormController.getEventsByUserResponse)
 
 module.exports = router

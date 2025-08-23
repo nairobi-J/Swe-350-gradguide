@@ -77,4 +77,22 @@ const getEventFormResponseByUserId = async(req, res)=>{
     }
 };
 
-module.exports = {getEventForm, submitEventFormResponse, getEventFormResponse, getEventFormResponseByUserId}
+// get all event details for which a user has submitted responses
+const getEventsByUserResponse = async(req, res) => {
+    const {userId} = req.query
+
+    try{
+        const result = await pool.query(
+            `select e.* from event e
+             join event_registration_response r on e.id = r.event_id
+             where r.user_id = $1`, [userId]
+        )
+
+        res.status(201).json(result.rows)
+    }
+    catch(error){
+         res.status(501).json({error: error.message});
+    }
+};
+
+module.exports = {getEventForm, submitEventFormResponse, getEventFormResponse, getEventFormResponseByUserId, getEventsByUserResponse}
