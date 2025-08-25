@@ -131,10 +131,7 @@ export default function EventPageClient() {
           <div className="flex-1 overflow-y-auto py-4">
             <SideNavigation currentPath={currentPath} navigate={navigate} />
           </div>
-          <div className="p-4 text-xs text-gray-500 border-t border-gray-200">
-            <p>Current User ID: <span className="font-mono break-all">{currentUserId}</span></p>
-            <p className="mt-2">Note: This uses dummy data and simulates navigation.</p>
-          </div>
+         
         </div>
       </aside>
 

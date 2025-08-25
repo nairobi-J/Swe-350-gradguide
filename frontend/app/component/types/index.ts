@@ -16,6 +16,7 @@ export interface RegistrationField {
 }
 
 export interface Event {
+  user_id: ReactNode;
   id: string;
   name: string;
   date: string;

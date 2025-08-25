@@ -1,7 +1,7 @@
 // frontend/app/component/events/EventCard.tsx
 'use client';
 import { CalendarDays, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Event } from '../types';
 import RegistrationModal from './RegistrationFormPage';
@@ -16,7 +16,22 @@ export default function EventCard({ event, onViewDetails }: EventCardProps) {
   const [showLoginMessage, setShowLoginMessage] = useState(false);
   const router = useRouter();
   console.log(event);
+  const [creatorName, setCreatorName] = useState('');
+ const BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL
+  useEffect(() => {
+    const fetchUserName = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/auth/getUserById/${event.user_id}`);
+        const userData = await response.json();
+        setCreatorName(`${userData.first_name}_${userData.id}`);
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        setCreatorName(`user ${event.user_id}`); // Fallback
+      }
+    };
 
+    fetchUserName();
+  }, [event.user_id]);
   // Function to check if user is logged in
   const checkAuthentication = () => {
     const token = localStorage.getItem('token');
@@ -47,8 +62,9 @@ export default function EventCard({ event, onViewDetails }: EventCardProps) {
         <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-1">{event.name}</h3>
         <div className="flex items-center text-sm text-gray-600 mb-3">
           <CalendarDays className="w-4 h-4 mr-2" />
-          <span>{event.date} at {event.time}</span>
+         {event.date} at {event.time} 
         </div>
+     <h2>Created By: {creatorName || 'loading...'}</h2>
         <p className="text-gray-600 text-sm mb-4 line-clamp-2">
           {event.description}
         </p>
