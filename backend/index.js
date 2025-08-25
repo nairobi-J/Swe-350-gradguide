@@ -36,6 +36,7 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const guidelines = require('./routes/guidelines');
 const paymentRoutes = require('./routes/paymentRoutes');
 const messageRoutes = require('./routes/messageRoutes')
+const interviewRoutes = require('./routes/interviewRoutes')
 
 
 
@@ -54,6 +55,8 @@ app.use('/api/payment', paymentRoutes);
 app.use('/generate', guidelines);
 
 app.use('/message', messageRoutes);
+
+app.use('/interview', interviewRoutes);
 
 
 // In your Express backend
