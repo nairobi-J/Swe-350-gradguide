@@ -20,7 +20,8 @@ const getInterviewQuestions  = async (req, res) => {
           // The `parts` array contains the text or other content.
           parts: [
             {
-              text: `Generate ${count} ${difficulty} level interview questions about ${topic} with answers. Return the response as a JSON array of objects, where each object has a 'question' and 'answer' field.`
+              text: `Generate ${count} ${difficulty} level interview questions about ${topic} with answers. 
+              Return the response as a JSON array of objects, where each object has a 'question' and 'answer' field.`
             }
           ]
         }

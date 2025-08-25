@@ -8,7 +8,21 @@ export default function MessagingSystem() {
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState([]);
   const [conversations, setConversations] = useState([]);
-  const [messages, setMessages] = useState([]);
+  type Message = {
+    id: number | string;
+    user1_id?: number;
+    user2_id?: number;
+    sender_id?: number;
+    senderId?: number;
+    senderName?: string;
+    message_text?: string;
+    text?: string;
+    created_at?: string;
+    timestamp?: string;
+    isMe?: boolean;
+  };
+
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
 
   const messagesEndRef = useRef(null);
@@ -43,6 +57,7 @@ export default function MessagingSystem() {
         const response = await fetch(`${BACKEND_URL}/auth/getUsers`);
         const userData = await response.json();
         setUsers(userData);
+        console.log(userData)
         setLoading(false);
       } catch (error) {
         console.error('Failed to fetch users:', error);
@@ -151,12 +166,16 @@ export default function MessagingSystem() {
     }
   };
 
+
   if (loading) {
     return (
-      <div className="flex h-[calc(100vh-20px)] w-full items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading users...</p>
+      <div className="flex justify-center items-center min-h-screen text-gray-700">
+        <div className="flex flex-col items-center">
+          <svg className="animate-spin h-10 w-10 text-blue-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Loading Events...
         </div>
       </div>
     );
@@ -195,7 +214,13 @@ export default function MessagingSystem() {
                   <div className="flex items-start space-x-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-gray-900 truncate">{user.first_name}_{user.id}</h3>
+                        <h3 className="font-medium text-gray-900 truncate">{user.first_name}_{user.id} 
+                          
+                         
+                        </h3>
+                        {user.isActive ? (<div className="w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>) : (
+                           <div className="w-3 h-3 bg-red-500 border-2 border-white rounded-full"></div>)}
+                        
                       </div>
                     </div>
                   </div>
@@ -214,9 +239,7 @@ export default function MessagingSystem() {
                 <div className="flex items-center space-x-3">
                   <div className="relative">
                     
-                    {/* {users.find((u) => u.id === selectedChat)?.isOnline && (
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                    )} */}
+                   {users.find((u) => u.id === selectedChat) && (<div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${ users.find((u) => u.id === selectedChat)?.isActive  ? 'bg-green-500'  : 'bg-red-500'}`}></div>)}
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">
@@ -225,7 +248,7 @@ export default function MessagingSystem() {
                     <div className="flex items-center space-x-2">
                     
                       <span className="text-xs text-gray-500">
-                        {users.find((u) => u.id === selectedChat)?.isOnline ? 'Online' : 'Offline'}
+                        {users.find((u) => u.id === selectedChat)?.isActive ? 'Online' : 'Offline'}
                       </span>
                     </div>
                   </div>

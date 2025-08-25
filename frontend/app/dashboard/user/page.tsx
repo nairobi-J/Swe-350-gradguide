@@ -1,11 +1,11 @@
 'use client'
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm'; 
-import { AwaitedReactNode, JSXElementConstructor, ReactElement, ReactNode, SetStateAction, useState } from "react";
+import { AwaitedReactNode, JSXElementConstructor, ReactElement, ReactNode, SetStateAction, useEffect, useState } from "react";
 import { Edit2, Check, Sparkles, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
 //import parseRoadmapdata from './parseRoadmapdata';
 //import parseRoadmapData from './parseRoadmapdata';
-import RoadMap from './Roadmap'
+import RoadMap from './RoadmapSection'
 const CareerPathGenerator = () => {
   // State for user's primary interest/goal
 const [interest, setInterest] = useState('Machine Learning and AI, healthcare technology, and data science');
@@ -42,44 +42,91 @@ const [interest, setInterest] = useState('Machine Learning and AI, healthcare te
   const [shortSummary, setShortSummary] = useState('searching for remote jobs or higher studies');
 
   // State for storing the AI's response
-  const [response, setResponse] = useState('');
+  const [sections, setSections] = useState([]);
    const [parsedData, setParsedData] = useState<{ tasks: any[]; milestones: any[] }>({ tasks: [], milestones: [] });
   // State to manage loading status during API call
   const [isLoading, setIsLoading] = useState(false);
   // State to store any errors that occur
   const [error, setError] = useState('');
   const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
-const generateGuidelines = async () => {
-  setIsLoading(true);
-  setError('');
-  
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_AZURE_BACKEND_URL}/generate/response`, 
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          interest,
-          university,
-          // ... other fields
-        })
-      }
-    );
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Request failed');
-    
-    setResponse(data.data);
-    //const parsed = parseRoadmapData(data.data);
-    //console.log(parsed);
-    //setParsedData(parsed);
-    
-  } catch (err) {
-    setError(err instanceof Error ? err.message : String(err));
-  } finally {
-    setIsLoading(false);
-  }
+const clearStoredData = () => {
+  localStorage.removeItem('careerRoadmapData');
+  setSections([]);
+};
+
+useEffect(() => {
+  // Check if there's saved data in localStorage
+  const savedData = localStorage.getItem('careerRoadmapData');
+  
+  if (savedData) {
+    try {
+      const parsedData = JSON.parse(savedData);
+      
+      // Optional: Check if data is less than 24 hours old (optional)
+      const isDataFresh = new Date().getTime() - parsedData.timestamp < 24 * 60 * 60 * 1000;
+      
+      if (isDataFresh) {
+        setSections(parsedData.data);
+      }
+    } catch (error) {
+      console.error('Error parsing saved data:', error);
+      // Clear corrupted data
+      localStorage.removeItem('careerRoadmapData');
+    }
+  }
+}, []);
+
+
+
+const generateGuidelines = async () => {
+  setIsLoading(true);
+  setError('');
+  localStorage.removeItem('careerRoadmapData');
+  
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_AZURE_BACKEND_URL}/generate/response`, 
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          interest,
+          university,
+          degree,
+          cgpa,
+          careerLevel,
+          stacks,
+          projects,
+          priorExperience,
+          shortSummary,
+          outputFormat,
+        })
+      }
+    );
+
+   
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Request failed');
+    
+     localStorage.setItem('careerRoadmapData', JSON.stringify({
+      data: data.data,
+      timestamp: new Date().getTime(),
+      // Optional: also store the input values to check if they changed
+      inputs: { interest, university, degree, cgpa, careerLevel, stacks, projects, priorExperience, shortSummary }
+    }));
+
+
+
+
+    setSections(data.data); 
+      
+  } catch (err) {
+    setError(err instanceof Error ? err.message : String(err));
+  } finally {
+    setIsLoading(false);
+  }
 };
 
   const renderEditableField = (
@@ -162,25 +209,34 @@ return (
                         </div>
                     </div>
                 </div>
+                {/* Generate Button - Always visible */}
+<button
+    onClick={generateGuidelines}
+    className="w-full bg-indigo-600 text-white py-4 px-6 rounded-xl hover:bg-indigo-700 transition-all duration-300 transform hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-lg font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2 mb-8"
+    disabled={isLoading}
+>
+    {isLoading ? (
+        <>
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Generating Career Guidance...
+        </>
+    ) : (
+        <>
+            Generate Roadmap
+            <ArrowRight className="h-5 w-5" />
+        </>
+    )}
+</button>
 
-                {/* Generate Button */}
-                <button
-                    onClick={generateGuidelines}
-                    className="w-full bg-indigo-600 text-white py-4 px-6 rounded-xl hover:bg-indigo-700 transition-all duration-300 transform hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-lg font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2 mb-8"
-                    disabled={isLoading}
-                >
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                            Generating Career Guidance...
-                        </>
-                    ) : (
-                        <>
-                            Generate Roadmap
-                            <ArrowRight className="h-5 w-5" />
-                        </>
-                    )}
-                </button>
+{/* Clear Results Button - Only shows when there are sections */}
+{sections.length > 0 && (
+    <button
+        onClick={clearStoredData}
+        className="w-full bg-red-100 text-red-700 py-3 px-6 rounded-xl hover:bg-red-200 transition-all duration-300 border border-red-200 text-sm font-medium mb-8 flex items-center justify-center gap-2"
+    >
+        <span>Clear Results</span>
+    </button>
+)}
 
                 {/* Form Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -202,7 +258,10 @@ return (
             <div className="flex items-center gap-2 mb-6">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                 <h2 className="text-xl font-semibold text-slate-800">Your Career Roadmap</h2>
+                 
+
             </div>
+           
             
             {error && (
                 <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg flex items-start gap-3 mb-6">
@@ -213,16 +272,17 @@ return (
                     </div>
                 </div>
             )}
-
-            {response ? (
-                <div className="bg-white rounded-xl shadow-md p-6">
-                    <div className="prose prose-slate max-w-none prose-headings:text-slate-800 prose-p:text-slate-700 prose-li:text-slate-700 prose-strong:text-slate-800">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {response}
-                        </ReactMarkdown>
-                    </div>
-                </div>
-            ) : (
+             
+           {sections.length > 0 ? (
+        <div className="space-y-6">
+            {sections.map((section, index) => (
+                <RoadMap 
+                  key={index} 
+                  section={section} 
+                />
+            ))}
+        </div>
+    ) : (
                 <div className="flex items-center justify-center h-full">
                     <div className="text-center max-w-sm">
                         {isLoading ? (

@@ -13,5 +13,6 @@ router.post('/resend-verification', authController.resendVerificationCode)
 router.post('/verify-email', authController.verifyEmailCode)
 
 router.delete('/deleteUserByEmail', authController.deleteUserByEmail)
+router.post('/logout', authController.logout)
 
 module.exports = router

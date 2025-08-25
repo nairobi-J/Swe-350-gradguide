@@ -143,6 +143,7 @@ const login = async (req, res) => {
         if (!isPasswordValid) {
             return res.status(401).json({ message: 'Invalid credentials. Incorrect password.' });
         }
+       const set = await pool.query(`UPDATE users SET "isActive" = true WHERE email = $1`, [email]);
 
        const token = jwt.sign(
             { userId: user.id }, // Payload containing user ID
@@ -173,7 +174,7 @@ const getUsers = async(req, res) => {
     try {
         // 1. Fetch all users from the database
         const result = await pool.query(
-            `SELECT first_name , last_name , id FROM users` // It's better to select specific columns, not all of them
+            `SELECT first_name , last_name , id, "isActive" FROM users` // It's better to select specific columns, not all of them
         );
 
         // 2. Return the list of users as a JSON response
@@ -355,6 +356,39 @@ const sendVerificationCode = async (req, res) => {
     }
 };
 
+
+const logout = async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
+
+  try {
+    const { userId } = req.body; // Get userId from request body
+    
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    // Update user's active status using userId
+    const result = await pool.query(
+      'UPDATE users SET "isActive" = false WHERE id = $1',
+      [userId]
+    );
+
+    // Optional: Check if user was actually found and updated
+    if (result.rowCount === 0) {
+      console.warn(`User with ID ${userId} not found for logout`);
+    }
+
+    res.status(200).json({ message: 'Logged out successfully' });
+
+  } catch (error) {
+    console.error('Logout API error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
 // You would typically export this function to be used in your Express routes
 // module.exports = { login, register }; // If you have both in one file
 module.exports = { 
@@ -365,5 +399,6 @@ module.exports = {
     resendVerificationCode, 
     verifyEmailCode ,
     deleteUserByEmail,
-    sendVerificationCode
+    sendVerificationCode,
+    logout
 };

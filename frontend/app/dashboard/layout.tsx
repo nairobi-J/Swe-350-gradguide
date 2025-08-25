@@ -2,23 +2,67 @@
 
 import Link from 'next/link';
 import '../globals.css';
-import { GraduationCap, Home, Bot, BookOpen, Briefcase, TrendingUp, Menu, X, Calendar, User, LogInIcon, LogOutIcon, MessageCircle } from 'lucide-react';
+import { GraduationCap, Home, Bot, BookOpen, Briefcase, TrendingUp, Menu, X, Calendar, User, LogInIcon, LogOutIcon, MessageCircle, TestTube } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { label } from 'framer-motion/client';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isloggedIn, setIsLoggedIn] = useState(false);
 
-  
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL
+
+const getLoggedOut = async () => {  // Add async here
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        
+        if (payload && payload.userId !== undefined) {
+          console.log(payload);
+          const userId = payload.userId;  // You need to define userId variable
+          
+          const response = await fetch(`${BACKEND_URL}/auth/logout`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userId: userId }) // Use the defined variable
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to update logout status');
+          }
+
+          return true; // Success
+        } else {
+          console.warn('userId not found in payload');
+          return false;
+        }
+      } catch (error) {
+        console.error('Error parsing token:', error);
+        return false;
+      }
+    }
+    console.warn('No token found in localStorage');
+    return false;
+};
+
+
+
+
 
   const handleLogout = () => {
+    getLoggedOut();
     if(!isloggedIn){
-      window.location.href = '/dashboard'; // Redirect to login page if not logged in
+      window.location.href = '/dashboard';
       return;
     } 
-    localStorage.removeItem('token'); // Clear the token from local storage
-    setIsLoggedIn(false); // Update the state to reflect the logout
-    window.location.href = '/dashboard/home'; // Redirect to the dashboard or login page
+    localStorage.removeItem('token');
+    setIsLoggedIn(false); 
+    window.location.href = '/dashboard/home'; 
   }
 
   useEffect(() => {
@@ -73,11 +117,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
  
     //{ href: '/dashboard/ai-coach', label: 'AI Coach', icon: Bot },
     { href: '/dashboard/higher-studies', label: 'Study Abroad', icon: BookOpen },
-    { href: '/dashboard/event', label: 'Events', icon: Calendar},
+    { href: isloggedIn? '/dashboard/event':'/', label: 'Events', icon: Calendar},
      //{ href: '/dashboard/company', label: 'Job', icon: Briefcase },
     { href: '/dashboard/company', label: 'Search Job', icon: TrendingUp },
      {href : '/dashboard/user', label:'Road Map', icon:User},
-        { href: '/dashboard/chat', label: 'Chat', icon: MessageCircle },
+     {href:isloggedIn? '/dashboard/mock-test':'/', label:'Mock Test', icon:Briefcase},
+        { href: isloggedIn? '/dashboard/chat':'/', label: 'Chat', icon: MessageCircle },
      { href: isloggedIn? '/dashboard/home': '/dashboard', label: isloggedIn ? 'Logout' : 'Login', icon: isloggedIn ? LogOutIcon : LogInIcon, onClick: handleLogout },
 
   ];
@@ -89,10 +134,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center">
+
+            <div className="flex items-center" >
               <div className="flex items-center gap-2">
                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-1.5 rounded-md">
-                  <GraduationCap className="h-6 w-6 text-white" />
+                  <GraduationCap className="h-6 w-6 text-white" href='/dashboard/home' />
                 </div>
                 <span className="text-xl font-bold">
                   <span className="text-gray-900">Grad</span>

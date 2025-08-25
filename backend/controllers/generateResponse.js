@@ -5,77 +5,82 @@ exports.generateGuidelines = async (req, res) => {
   try {
     // Validate required fields
     if (!req.body.interest) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: "Career interest is required" 
+        message: "Career interest is required"
       });
     }
 
-    // Construct detailed prompt
+    // Construct detailed prompt with EXPLICIT JSON formatting instructions
     const prompt = `
-    Generate a comprehensive career development plan with these details:
-    
-    **Primary Interest**: ${req.body.interest}
-    **Education**:
-      - University: ${req.body.university || 'Not specified'}
-      - Degree: ${req.body.degree || 'Not specified'}
-      - GPA: ${req.body.cgpa || 'Not provided'}
-    
-    **Professional Level**: ${req.body.careerLevel || 'Not specified'}
-    
-    **Technical Skills**: 
-      ${req.body.stacks || 'None listed'}
-    
-    **Projects**:
-      ${req.body.projects || 'No projects mentioned'}
-    
-    **Work Experience**:
-      ${req.body.priorExperience || 'No prior experience'}
-    
-    **Current Focus**: 
-      ${req.body.shortSummary || 'Not specified'}
-    
-    **Output Preferences**:
-      - Format: ${req.body.outputFormat || 'Detailed steps with timeline'}
-    
-    Provide:
-    1. Skill development roadmap
-    2. Project recommendations
-    3. Job search strategies
-    4. Networking advice
-    5. Salary expectations
-    6. Industry trends analysis
+    Generate a comprehensive career development plan for a person with the following profile. 
+    Your entire response MUST be a valid JSON array of objects. Each object should have two fields: 
+    - 'title': A string representing the section title (e.g., "Skill Development Roadmap")
+    - 'content': A string containing the detailed advice for that section. Use Markdown for formatting within this string (e.g., **bold**, *italic*, lists).
+
+    **Profile:**
+    Primary Interest: ${req.body.interest}
+    University: ${req.body.university || 'Not specified'}
+    Degree: ${req.body.degree || 'Not specified'}
+    GPA: ${req.body.cgpa || 'Not provided'}
+    Professional Level: ${req.body.careerLevel || 'Not specified'}
+    Technical Skills: ${req.body.stacks || 'None listed'}
+    Projects: ${req.body.projects || 'No projects mentioned'}
+    Work Experience: ${req.body.priorExperience || 'No prior experience'}
+    Current Focus: ${req.body.shortSummary || 'Not specified'}
+
+    **Generate the career plan as a JSON array with the following sections:**
+    [
+      { "title": "Skill Development Roadmap", "content": "detailed text here..." },
+      { "title": "Project Recommendations", "content": "detailed text here..." },
+      { "title": "Job Search Strategies", "content": "detailed text here..." },
+      { "title": "Networking Advice", "content": "detailed text here..." },
+      { "title": "Salary Expectations & Negotiation", "content": "detailed text here..." },
+      { "title": "Industry Trends Analysis", "content": "detailed text here..." }
+    ]
     `;
 
-    // Call Gemini API
+    // Get the model instance
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash-latest"
+      model: "gemini-2.0-flash",
+      // CRUCIAL: Configure generation for JSON output
+      generationConfig: {
+        responseMimeType: "application/json",
+      },
     });
 
-    const result = await model.generateContent({
-      contents: [{
-        role: "user",
-        parts: [{ text: prompt }]
-      }]
-    });
-    
+    // Generate content
+    const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
-    // Format the response with Markdown
-    res.json({ 
+    // The response should be a JSON string. Parse it.
+    let careerPlanData;
+    try {
+      careerPlanData = JSON.parse(responseText);
+    } catch (parseError) {
+      // Fallback in case the response isn't clean JSON
+      console.error("Failed to parse Gemini response as JSON:", responseText);
+      // You could implement a fallback parsing strategy here if needed
+      throw new Error("AI response was not in the expected JSON format.");
+    }
+
+    // Ensure it's an array before sending
+    if (!Array.isArray(careerPlanData)) {
+      careerPlanData = [careerPlanData];
+    }
+
+    // Send the structured data to the frontend
+    res.json({
       success: true,
-      data: responseText,
-      structuredPrompt: prompt // Optional: for debugging
+      data: careerPlanData // This is now a clean array of objects
     });
 
   } catch (error) {
-    console.error("API Error:", error);
-    res.status(500).json({ 
+    console.error("Career plan generation error:", error);
+    res.status(500).json({
       success: false,
-      message: process.env.NODE_ENV === 'development' 
-        ? error.message 
-        : 'Failed to generate guidelines',
-      errorType: error.constructor.name
+      message: "Failed to generate career plan",
+      error: error.message
     });
   }
 };
