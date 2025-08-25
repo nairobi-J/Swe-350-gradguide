@@ -6,10 +6,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       
-      <body>
+      <body >
         {/* Layout UI */}
         {/* Place children where you want to render a page or nested layout */}
-        <main>{children}</main>
+        <div className="hidden-scrollbar">
+       <main>{children}</main>
+        </div>
+       
       </body>
     </html>
   )
