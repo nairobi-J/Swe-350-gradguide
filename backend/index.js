@@ -11,7 +11,9 @@ app.use(express.json());
 // We will default to 5000 if the environment variable is not set.
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://gradguide.vercel.app'
+}));
 const server = createServer(app);
 const io = new SocketIoServer(server, {
   cors: {
