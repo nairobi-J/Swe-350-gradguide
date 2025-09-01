@@ -122,7 +122,7 @@ const getLoggedOut = async () => {  // Add async here
     { href: '/dashboard/company', label: 'Search Job', icon: TrendingUp },
      {href : '/dashboard/user', label:'Road Map', icon:User},
      {href: '/dashboard/mock-test', label:'Mock Test', icon:Briefcase},
-        { href: isloggedIn? '/dashboard/chat':"/", label: 'Chat', icon: MessageCircle },
+        { href:'/dashboard/chat', label: 'Chat', icon: MessageCircle },
      { href: isloggedIn? '/dashboard/home': '/dashboard', label: isloggedIn ? 'Logout' : 'Login', icon: isloggedIn ? LogOutIcon : LogInIcon, onClick: handleLogout },
 
   ];
