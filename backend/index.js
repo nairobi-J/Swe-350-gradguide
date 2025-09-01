@@ -12,7 +12,8 @@ app.use(express.json());
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: 'https://gradguide.vercel.app'
+  //origin: 'https://gradguide.vercel.app'
+  origin : "http://localhost:3000"
 }));
 const server = createServer(app);
 const io = new SocketIoServer(server, {
