@@ -15,7 +15,7 @@ export default function EventCard({ event, onViewDetails }: EventCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showLoginMessage, setShowLoginMessage] = useState(false);
   const router = useRouter();
-  console.log(event);
+  //console.log(event);
   const [creatorName, setCreatorName] = useState('');
  const BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL
   useEffect(() => {

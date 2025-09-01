@@ -19,16 +19,14 @@ import CreateEventPage from '../../component/events/CreateEventPage';
 import EventDetailPage from '../../component/events/EventDetailPage';
 import RegistrationFormPage from '../../component/events/RegistrationFormPage';
 import MyRegistrationsPage from '../../component/events/MyRegistrationsPage';
-import { useRouter } from 'next/navigation';
 
 let DUMMY_REGISTRATIONS: Registration[] = [];
 
 export default function EventPageClient() {
-  const router = useRouter();
   const [currentPath, setCurrentPath] = useState('/dashboard/events');
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true); // <--- ADD LOADING STATE
-  const [registrations, setRegistrations] = useState<Registration[]>();
+  const [registrations, setRegistrations] = useState<Registration[]>(DUMMY_REGISTRATIONS);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>(DUMMY_FEEDBACKS);
   const [queries, setQueries] = useState<Query[]>(DUMMY_QUERIES);
   const [currentUserId, setCurrentUserId] = useState('');
@@ -59,10 +57,10 @@ export default function EventPageClient() {
   const addEvent = useCallback((newEvent: Event) => {
     setEvents(prevEvents => [...prevEvents, newEvent]);
   }, []);
- const isLoggedIn = currentUserId !== null && currentUserId !== undefined && currentUserId !== "";
- console.log(currentUserId);
+ const isLoggedIn = currentUserId !== null && currentUserId !== undefined;
 const handleLoginRedirect = () => {
- router.push('/dashboard');
+  // Your logic to redirect the user to the login page
+  // For example, using a router: router.push('/login');
 };
 
   const addFeedback = useCallback((eventId: string, userId: string, username: string, comment: string) => {
@@ -162,33 +160,14 @@ const handleLoginRedirect = () => {
               navigateToCreateEvent={() => navigate('/dashboard/create-event')}
             />
           )}
-         {currentPath === '/dashboard/create-event' && (
-  <>
-    {!isLoggedIn ? (
-      // If the user is NOT logged in, show the login message
-      <div className="mb-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm relative">
-        <div className="pr-6">
-          <p className="font-medium mb-1">Login Required</p>
-          <p className="mb-2">You must log in to create an event.</p>
-          <button
-            onClick={handleLoginRedirect}
-            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-          >
-            Go to Login
-          </button>
-        </div>
-      </div>
-    ) : (
-      // If the user IS logged in, show the CreateEventPage
-      <CreateEventPage
-        addEvent={addEvent}
-        currentUserId={currentUserId}
-        setMessage={setMessage}
-        setMessageType={setMessageType}
-      />
-    )}
-  </>
-)}
+          {currentPath === '/dashboard/create-event' && (
+            <CreateEventPage
+              addEvent={addEvent}
+              currentUserId={currentUserId}
+              setMessage={setMessage}
+              setMessageType={setMessageType}
+            />
+          )}
           {currentPath.startsWith('/dashboard/event-details/') && currentEvent && (
             <EventDetailPage
               event={currentEvent}

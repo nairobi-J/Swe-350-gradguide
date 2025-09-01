@@ -1,18 +1,21 @@
-// frontend/app/component/events/CreateEventPage.tsx
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { XCircle } from 'lucide-react';
-import { Event, RegistrationField } from '../types'; // Import types
+import { Event, RegistrationField } from '../types';
 import axios from 'axios';
 const AZURE_BACKEND_URL = process.env.NEXT_PUBLIC_AZURE_BACKEND_URL;
+
 interface CreateEventPageProps {
   addEvent: (event: Event) => void;
-  currentUserId: string;
+  currentUserId: string | null; // Changed to allow null
   setMessage: (message: string | null) => void;
   setMessageType: (type: 'success' | 'error' | 'info') => void;
 }
 
 const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUserId, setMessage, setMessageType }) => {
+  const router = useRouter();
+  console.log(currentUserId);
   const [eventName, setEventName] = useState('');
   const [eventType, setEventType] = useState<'online' | 'offline'>('online');
   const [eventDate, setEventDate] = useState('');
@@ -26,6 +29,18 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
     { name: 'email', label: 'Email', type: 'email', required: true },
   ]);
   const [loading, setLoading] = useState(false);
+   const token = localStorage.getItem('token');
+  // Redirect to login if user is not logged in
+  // useEffect(() => {
+  //   if (!token) {
+  //     alert("please log in first");
+  //     router.push('/dashboard');
+  //   }
+  // }, [token, router]);
+
+  // if (!token) {
+  //   return null; // Don't render anything while redirecting
+  // }
 
   const addField = () => {
     setRegistrationFields([...registrationFields, { name: '', label: '', type: 'text', required: false }]);
@@ -33,7 +48,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
 
   const updateField = (index: number, key: keyof RegistrationField, value: any) => {
     const newFields = [...registrationFields];
-    (newFields[index] as any)[key] = value; // Type assertion for flexibility
+    (newFields[index] as any)[key] = value;
     setRegistrationFields(newFields);
   };
 
@@ -42,12 +57,12 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
     setRegistrationFields(newFields);
   };
 
-  const handleSubmit = async(e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
 
-    const parsedPrice = parseFloat(eventPrice.toString()); // Ensure it's parsed correctly
+    const parsedPrice = parseFloat(eventPrice.toString());
     if (isPaid && (isNaN(parsedPrice) || parsedPrice <= 0)) {
       setMessage("Please enter a valid price for paid events.");
       setMessageType('error');
@@ -63,7 +78,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
       return;
     }
 
-    const newEvent: Event = { // Type the new event
+    const newEvent: Event = {
       id: `e${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
       name: eventName,
       type: eventType,
@@ -77,47 +92,73 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
       registrationFields: registrationFields,
       createdAt: new Date(),
     };
+   
+   
+    
 
-   const token =  localStorage.getItem('token'); 
+    try {
+      const response = await axios.post(`${AZURE_BACKEND_URL}/event/create`, {
+        eventName: newEvent.name,
+        eventType: newEvent.type,
+        eventDate: newEvent.date,
+        eventTime: newEvent.time,
+        eventLocation: newEvent.location,
+        eventDescription: newEvent.description,
+        isPaid: newEvent.isPaid,
+        eventPrice: newEvent.price,
+        registrationFields: newEvent.registrationFields
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-    const response = await axios.post(`${AZURE_BACKEND_URL}/event/create`, {
-      eventName: newEvent.name,
-      eventType: newEvent.type,
-      eventDate: newEvent.date,
-      eventTime: newEvent.time,
-      eventLocation: newEvent.location,
-      eventDescription: newEvent.description,
-      isPaid: newEvent.isPaid,
-      eventPrice: newEvent.price,
-      registrationFields: newEvent.registrationFields
-    },{
-      headers:{
-        Authorization: `Bearer ${token}`, 
-        "Content-Type": "application/json",
-      },
-    })
+      console.log(response);
 
-    console.log(response)
+      addEvent(newEvent);
+      setMessage("Event created successfully!");
+      setMessageType('success');
 
-    addEvent(newEvent);
-    setMessage("Event created successfully!");
-    setMessageType('success');
+      // Clear form
+      setEventName('');
+      setEventType('online');
+      setEventDate('');
+      setEventTime('');
+      setEventLocation('');
+      setEventDescription('');
+      setIsPaid(false);
+      setEventPrice(0);
+      setRegistrationFields([
+        { name: 'fullName', label: 'Full Name', type: 'text', required: true },
+        { name: 'email', label: 'Email', type: 'email', required: true },
+      ]);
 
-    // Clear form
-    setEventName('');
-    setEventType('online');
-    setEventDate('');
-    setEventTime('');
-    setEventLocation('');
-    setEventDescription('');
-    setIsPaid(false);
-    setEventPrice(0);
-    setRegistrationFields([
-      { name: 'fullName', label: 'Full Name', type: 'text', required: true },
-      { name: 'email', label: 'Email', type: 'email', required: true },
-    ]);
-    setLoading(false);
+    } catch (error) {
+      setMessage("Failed to create event. Please try again.");
+      setMessageType('error');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
+  if (!token) {
+    // If no token is found, display the alert and redirect
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="p-6 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center shadow-lg w-full max-w-md">
+          <p className="font-bold text-lg mb-2">Login Required</p>
+          <p className="mb-4">You must be logged in to create an event.</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -141,7 +182,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
             <select
               id="eventType"
               value={eventType}
-              onChange={(e) => setEventType(e.target.value as 'online' | 'offline')} // Cast for type safety
+              onChange={(e) => setEventType(e.target.value as 'online' | 'offline')}
               className="w-full p-3 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
             >
               <option value="online">Online</option>
@@ -275,7 +316,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ addEvent, currentUser
                   className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                 />
                 <label className="text-sm text-gray-700">Required</label>
-                {index > 1 && ( // Allow removing fields beyond the initial two
+                {index > 1 && (
                   <button
                     type="button"
                     onClick={() => removeField(index)}

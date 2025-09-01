@@ -1,8 +1,9 @@
 'use client';
-
+import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
 export default function MessagingSystem() {
+  const router = useRouter();
   const [selectedChat, setSelectedChat] = useState(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,7 +58,7 @@ export default function MessagingSystem() {
         const response = await fetch(`${BACKEND_URL}/auth/getUsers`);
         const userData = await response.json();
         setUsers(userData);
-        console.log(userData)
+        //console.log(userData)
         setLoading(false);
       } catch (error) {
         console.error('Failed to fetch users:', error);
@@ -180,7 +181,23 @@ export default function MessagingSystem() {
       </div>
     );
   }
-
+  const token = localStorage.getItem('token')
+if(!token){
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="p-6 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center shadow-lg w-full max-w-md">
+          <p className="font-bold text-lg mb-2">Login Required</p>
+          <p className="mb-4">You must be logged in to start a conversation.</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+}
   return (
     <div className="flex h-[calc(100vh-90px)] w-full bg-gray-50 overflow-hidden">
       <div className="flex w-full h-full bg-white rounded-lg shadow-xl">
